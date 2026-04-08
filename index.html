@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fit Recruiting — Mobile's Boutique Recruiting Firm</title>
+<link rel="icon" href="assets/logo-mark.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0e1b2c;
+    --ink-soft: #1e2d42;
+    --paper: #f5f1ea;
+    --paper-warm: #ede6d7;
+    --accent: #f8c73a;
+    --accent-soft: #f6d572;
+    --gold: #f8c73a;
+    --line: rgba(14, 27, 44, 0.12);
+    --muted: rgba(14, 27, 44, 0.62);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Subtle paper texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle at 1px 1px, rgba(14,27,44,0.04) 1px, transparent 0);
+    background-size: 24px 24px;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 48px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ============ NAV ============ */
+  nav {
+    padding: 32px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .logo-link {
+    display: inline-flex;
+    align-items: center;
+    line-height: 0;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+
+  .logo-img {
+    display: block;
+    height: clamp(38px, 5.5vw, 52px);
+    width: auto;
+    max-width: min(280px, 58vw);
+    object-fit: contain;
+    object-position: left center;
+  }
+
+  .logo-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: 6px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 40px;
+    list-style: none;
+    align-items: center;
+  }
+  .nav-links a {
+    text-decoration: none;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    position: relative;
+    transition: color 0.3s;
+  }
+  .nav-links a:not(.nav-cta):hover { color: var(--accent); }
+  .nav-links a:not(.nav-cta)::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--accent);
+    transition: width 0.3s;
+  }
+  .nav-links a:not(.nav-cta):hover::after { width: 100%; }
+
+  .nav-links a.nav-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 12px 24px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+  }
+  .nav-links a.nav-cta:hover {
+    background: var(--accent);
+    color: var(--ink);
+    transform: translateY(-1px);
+  }
+  .nav-links a.nav-cta:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  /* ============ HERO ============ */
+  .hero {
+    padding: 100px 0 80px;
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 60px;
+    align-items: center;
+    position: relative;
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 32px;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .hero h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(48px, 7vw, 96px);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+    color: var(--ink);
+    margin-bottom: 32px;
+  }
+  .hero h1 em {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--accent);
+  }
+
+  .hero p.lede {
+    font-size: 19px;
+    line-height: 1.6;
+    color: var(--muted);
+    max-width: 520px;
+    margin-bottom: 40px;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 18px 36px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn-primary:hover {
+    background: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(217,79,42,0.3);
+  }
+  .btn-primary svg { transition: transform 0.3s; }
+  .btn-primary:hover svg { transform: translateX(4px); }
+
+  .btn-ghost {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--ink);
+    transition: all 0.3s;
+  }
+  .btn-ghost:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Hero card on right */
+  .hero-card {
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 4px;
+    padding: 48px 40px;
+    position: relative;
+    transform: rotate(1.5deg);
+    box-shadow: 0 30px 60px -20px rgba(14,27,44,0.3);
+  }
+  .hero-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgba(245,241,234,0.15);
+    border-radius: 4px;
+    transform: rotate(-3deg) scale(1.02);
+    pointer-events: none;
+  }
+
+  .hero-card-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 24px;
+  }
+
+  .hero-stat {
+    font-family: 'Fraunces', serif;
+    font-size: 88px;
+    font-weight: 300;
+    line-height: 1;
+    margin-bottom: 8px;
+    letter-spacing: -0.04em;
+  }
+  .hero-stat sup { font-size: 32px; color: var(--accent-soft); }
+
+  .hero-card-text {
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(245,241,234,0.7);
+    margin-bottom: 32px;
+  }
+
+  .hero-card-divider {
+    height: 1px;
+    background: rgba(245,241,234,0.15);
+    margin: 24px 0;
+  }
+
+  .hero-card-quote {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--paper);
+  }
+  .hero-card-quote::before { content: '"'; color: var(--accent); font-size: 24px; }
+  .hero-card-quote::after { content: '"'; color: var(--accent); font-size: 24px; }
+
+  /* ============ MARQUEE ============ */
+  .marquee {
+    margin: 60px 0;
+    padding: 24px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .marquee-track {
+    display: inline-block;
+    animation: scroll 40s linear infinite;
+  }
+  .marquee span {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin: 0 32px;
+  }
+  .marquee span em {
+    color: var(--accent);
+    font-style: italic;
+  }
+  .marquee .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    vertical-align: middle;
+    margin: 0 16px;
+  }
+  @keyframes scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ============ SERVICES ============ */
+  .services {
+    padding: 100px 0;
+  }
+
+  .section-header {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 60px;
+    margin-bottom: 80px;
+    align-items: end;
+  }
+
+  .section-num {
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+  }
+  .section-num::before { content: '— '; }
+
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(40px, 5vw, 64px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-top: 16px;
+  }
+  .section-title em { font-style: italic; color: var(--accent); }
+
+  .section-desc {
+    font-size: 18px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 480px;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .service {
+    padding: 40px 24px 40px 0;
+    border-right: 1px solid var(--line);
+    position: relative;
+    transition: background 0.4s;
+    cursor: pointer;
+  }
+  .service:last-child { border-right: none; padding-right: 0; }
+  .service:hover { background: var(--paper-warm); }
+
+  .service-num {
+    font-family: 'Fraunces', serif;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 60px;
+    padding-left: 24px;
+  }
+  .service:first-child .service-num { padding-left: 0; }
+
+  .service h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    padding-left: 24px;
+    margin-bottom: 16px;
+  }
+  .service:first-child h3 { padding-left: 0; }
+
+  .service p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.5;
+    padding-left: 24px;
+  }
+  .service:first-child p { padding-left: 0; }
+
+  /* ============ JOBS ============ */
+  .jobs {
+    /* Break out of .wrap without 100vw padding hacks (avoids horizontal scroll / misalignment) */
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    box-sizing: border-box;
+    padding: clamp(64px, 10vw, 100px) 0;
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .jobs-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 clamp(20px, 5vw, 48px);
+    width: 100%;
+  }
+
+  .jobs .section-num { color: var(--accent-soft); }
+  .jobs .section-title { color: var(--paper); }
+  .jobs .section-title em { color: var(--accent-soft); }
+  .jobs .section-desc { color: rgba(245,241,234,0.6); }
+
+  .job-list {
+    margin-top: 60px;
+  }
+
+  .job {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: clamp(16px, 2.5vw, 32px);
+    align-items: center;
+    padding: 32px 0;
+    border-top: 1px solid rgba(245,241,234,0.12);
+    transition: background 0.35s ease, padding-left 0.35s ease;
+    cursor: pointer;
+  }
+  .job:last-child { border-bottom: 1px solid rgba(245,241,234,0.12); }
+  .job:hover {
+    padding-left: 16px;
+    background: linear-gradient(90deg, rgba(248, 199, 58, 0.14), transparent);
+  }
+
+  .job-num {
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    color: var(--gold);
+    min-width: 0;
+  }
+
+  .job-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(22px, 2.8vw, 32px);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    min-width: 0;
+  }
+  .job:hover .job-title { color: var(--accent-soft); }
+
+  .job-meta {
+    font-size: clamp(11px, 1.1vw, 13px);
+    color: rgba(245,241,234,0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    min-width: 0;
+  }
+
+  .job-salary {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(15px, 1.6vw, 18px);
+    color: var(--gold);
+    min-width: 0;
+  }
+
+  .job-arrow {
+    width: 48px;
+    height: 48px;
+    border: 1px solid rgba(245,241,234,0.25);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+  .job:hover .job-arrow {
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: rotate(-45deg);
+  }
+
+  .jobs-footer {
+    margin-top: 48px;
+    text-align: center;
+  }
+  .jobs-footer a {
+    color: var(--paper);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    border-bottom: 1px solid var(--paper);
+    padding-bottom: 4px;
+    transition: color 0.3s;
+  }
+  .jobs-footer a:hover { color: var(--accent-soft); border-color: var(--accent-soft); }
+
+  /* Jobs: tablet / narrow desktop — stack meta + salary so rows don’t collide */
+  @media (max-width: 1100px) {
+    .jobs .section-header {
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin-bottom: 48px;
+      align-items: start;
+    }
+
+    .job {
+      grid-template-columns: 34px minmax(0, 1fr) auto;
+      grid-template-rows: auto auto auto;
+      gap: 6px 16px;
+      align-items: start;
+      padding: 26px 0;
+    }
+
+    .job:hover {
+      padding-left: 8px;
+    }
+
+    .job-num {
+      grid-column: 1;
+      grid-row: 1 / -1;
+      align-self: start;
+      padding-top: 6px;
+    }
+
+    .job-title {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .job-meta {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    .job-salary {
+      grid-column: 2;
+      grid-row: 3;
+    }
+
+    .job-arrow {
+      grid-column: 3;
+      grid-row: 1 / -1;
+      align-self: center;
+      justify-self: end;
+    }
+  }
+
+  /* ============ PROCESS ============ */
+  .process {
+    padding: 120px 0;
+  }
+
+  .process-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: start;
+    margin-top: 80px;
+  }
+
+  .process-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .step {
+    padding: 32px 0;
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .step:last-child { border-bottom: 1px solid var(--line); }
+
+  .step-num {
+    font-family: 'Fraunces', serif;
+    font-size: 48px;
+    font-weight: 300;
+    color: var(--accent);
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  .step h4 {
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .step p {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .process-visual {
+    background: var(--paper-warm);
+    border-radius: 4px;
+    padding: 60px 48px;
+    position: sticky;
+    top: 40px;
+  }
+
+  .quote-mark {
+    font-family: 'Fraunces', serif;
+    font-size: 120px;
+    line-height: 0.7;
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  .pull-quote {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 400;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    margin: 24px 0 32px;
+  }
+  .pull-quote em { font-style: italic; color: var(--accent); }
+
+  .quote-attr {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+  .quote-attr strong {
+    display: block;
+    color: var(--ink);
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  /* ============ CTA ============ */
+  .cta {
+    padding: 120px 0;
+    text-align: center;
+    border-top: 1px solid var(--line);
+  }
+
+  .cta h2 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(48px, 7vw, 96px);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+    margin-bottom: 24px;
+  }
+  .cta h2 em { font-style: italic; color: var(--accent); }
+
+  .cta p {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 540px;
+    margin: 0 auto 48px;
+  }
+
+  .cta-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+  }
+
+  /* ============ FOOTER ============ */
+  footer {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 80px 0 32px;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 60px;
+    margin-bottom: 60px;
+  }
+
+  .footer-brand .logo-link {
+    background: var(--paper);
+    padding: 12px 14px;
+    border-radius: 8px;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .footer-brand .logo-img {
+    height: clamp(44px, 6vw, 58px);
+    max-width: min(300px, 100%);
+  }
+
+  .footer-brand p {
+    margin-top: 16px;
+    color: rgba(245,241,234,0.6);
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 320px;
+  }
+
+  .footer-col h5 {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 20px;
+  }
+  .footer-col ul { list-style: none; }
+  .footer-col li { margin-bottom: 12px; }
+  .footer-col a {
+    color: rgba(245,241,234,0.7);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s;
+  }
+  .footer-col a:hover { color: var(--accent-soft); }
+
+  .footer-bottom {
+    padding-top: 32px;
+    border-top: 1px solid rgba(245,241,234,0.12);
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: rgba(245,241,234,0.5);
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 900px) {
+    .wrap { padding: 0 24px; }
+    .nav-links {
+      gap: 0;
+      margin: 0;
+      padding: 0;
+    }
+    .nav-links li:not(:last-child) {
+      display: none;
+    }
+    .hero { grid-template-columns: 1fr; padding: 60px 0; gap: 40px; }
+    .hero-card { transform: none; }
+    .section-header { grid-template-columns: 1fr; gap: 24px; }
+    .services-grid { grid-template-columns: 1fr 1fr; }
+    .service { border-right: none; border-bottom: 1px solid var(--line); padding: 32px 0 !important; }
+    .service h3, .service p, .service-num { padding-left: 0 !important; }
+    .job {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto auto auto;
+      gap: 8px 12px;
+      align-items: start;
+      padding: 22px 0;
+    }
+    .job:hover {
+      padding-left: 0;
+      background: none;
+    }
+    .job-num {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      margin-bottom: 0;
+      padding-top: 0;
+    }
+    .job-title {
+      grid-column: 1 / 2;
+      grid-row: 2;
+      font-size: clamp(22px, 6vw, 28px);
+    }
+    .job-meta {
+      grid-column: 1 / 2;
+      grid-row: 3;
+    }
+    .job-salary {
+      grid-column: 1 / 2;
+      grid-row: 4;
+    }
+    .job-arrow {
+      grid-column: 2 / 3;
+      grid-row: 2 / span 3;
+      align-self: center;
+      justify-self: end;
+      width: 42px;
+      height: 42px;
+    }
+    .process-grid { grid-template-columns: 1fr; gap: 40px; }
+    .footer-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
+    .marquee span { font-size: 20px; }
+  }
+
+  /* Fade-in on load */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.8s ease forwards;
+  }
+  .fade-up.delay-1 { animation-delay: 0.1s; }
+  .fade-up.delay-2 { animation-delay: 0.2s; }
+  .fade-up.delay-3 { animation-delay: 0.3s; }
+  .fade-up.delay-4 { animation-delay: 0.4s; }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="logo-link" aria-label="fit — finding quality people">
+      <img class="logo-img" src="assets/logo.png" width="266" height="174" alt="fit — finding quality people">
+    </a>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#services">Services</a></li>
+      <li><a href="#jobs">Open Roles</a></li>
+      <li><a href="#process">Process</a></li>
+      <li><a href="#" class="nav-cta">Submit Resume</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <div class="hero-eyebrow fade-up">Mobile, Alabama · Est. 2008</div>
+      <h1 class="fade-up delay-1">The right<br>people, the<br><em>right fit.</em></h1>
+      <p class="lede fade-up delay-2">A boutique recruiting firm placing top accounting, IT, engineering, and executive talent across the Gulf Coast — with the personal touch the big agencies forgot.</p>
+      <div class="hero-actions fade-up delay-3">
+        <a href="#jobs" class="btn-primary">
+          Browse Open Roles
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="#" class="btn-ghost">Hire with Fit</a>
+      </div>
+    </div>
+
+    <div class="hero-card fade-up delay-4">
+      <div class="hero-card-label">By the numbers</div>
+      <div class="hero-stat">75<sup>%</sup></div>
+      <p class="hero-card-text">of candidates hired through Fit are one of the first two we send. We've maintained those results since our very first client.</p>
+      <div class="hero-card-divider"></div>
+      <p class="hero-card-quote">We're picky on purpose. It saves everyone time.</p>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee">
+    <div class="marquee-track">
+      <span>Accounting</span><span class="dot"></span>
+      <span><em>Information Technology</em></span><span class="dot"></span>
+      <span>Office Administration</span><span class="dot"></span>
+      <span><em>Engineering</em></span><span class="dot"></span>
+      <span>Executive Search</span><span class="dot"></span>
+      <span><em>Temp-to-Hire</em></span><span class="dot"></span>
+      <span>Accounting</span><span class="dot"></span>
+      <span><em>Information Technology</em></span><span class="dot"></span>
+      <span>Office Administration</span><span class="dot"></span>
+      <span><em>Engineering</em></span><span class="dot"></span>
+      <span>Executive Search</span><span class="dot"></span>
+      <span><em>Temp-to-Hire</em></span><span class="dot"></span>
+    </div>
+  </div>
+
+  <!-- SERVICES -->
+  <section class="services" id="services">
+    <div class="section-header">
+      <div class="section-num">01 / Specialties</div>
+      <div>
+        <h2 class="section-title">Built for the roles<br>that <em>actually</em> matter.</h2>
+      </div>
+    </div>
+
+    <div class="services-grid">
+      <div class="service">
+        <div class="service-num">→ 01</div>
+        <h3>Accounting<br>& Finance</h3>
+        <p>Controllers, staff accountants, CFOs, and everyone in between.</p>
+      </div>
+      <div class="service">
+        <div class="service-num">→ 02</div>
+        <h3>Information<br>Technology</h3>
+        <p>Developers, sysadmins, infrastructure leads, and security pros.</p>
+      </div>
+      <div class="service">
+        <div class="service-num">→ 03</div>
+        <h3>Office<br>Administration</h3>
+        <p>Office managers, executive assistants, and operations specialists.</p>
+      </div>
+      <div class="service">
+        <div class="service-num">→ 04</div>
+        <h3>Engineering<br>& Technical</h3>
+        <p>Mechanical, electrical, civil, and project engineering talent.</p>
+      </div>
+      <div class="service">
+        <div class="service-num">→ 05</div>
+        <h3>Executive<br>Search</h3>
+        <p>Discreet placement of senior leaders and C-suite roles.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- JOBS -->
+  <section class="jobs" id="jobs">
+    <div class="jobs-inner">
+      <div class="section-header">
+        <div class="section-num">02 / Now Hiring</div>
+        <div>
+          <h2 class="section-title">Open positions,<br><em>updated daily.</em></h2>
+          <p class="section-desc" style="margin-top:24px;">A small selection of what we're working on right now. Most placements happen within 48 hours of a job order.</p>
+        </div>
+      </div>
+
+      <div class="job-list">
+        <div class="job">
+          <div class="job-num">01</div>
+          <div class="job-title">Executive Director</div>
+          <div class="job-meta">Mobile, AL · Full Time</div>
+          <div class="job-salary">$90K–$100K</div>
+          <div class="job-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+
+        <div class="job">
+          <div class="job-num">02</div>
+          <div class="job-title">X-Ray Technician</div>
+          <div class="job-meta">Mobile, AL · Full Time</div>
+          <div class="job-salary">$41K–$52K</div>
+          <div class="job-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+
+        <div class="job">
+          <div class="job-num">03</div>
+          <div class="job-title">Staff Accountant</div>
+          <div class="job-meta">Moss Point, MS · Full Time</div>
+          <div class="job-salary">$70K–$80K</div>
+          <div class="job-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+
+        <div class="job">
+          <div class="job-num">04</div>
+          <div class="job-title">Office Manager</div>
+          <div class="job-meta">Mobile, AL · Full Time</div>
+          <div class="job-salary">Competitive</div>
+          <div class="job-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="jobs-footer">
+        <a href="#">View all open positions →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCESS -->
+  <section class="process" id="process">
+    <div class="section-header">
+      <div class="section-num">03 / How we work</div>
+      <div>
+        <h2 class="section-title">A process built<br>around <em>relationships.</em></h2>
+        <p class="section-desc" style="margin-top:24px;">We don't blast resumes. We sit down with you, learn your culture, and bring back people who already feel like part of the team.</p>
+      </div>
+    </div>
+
+    <div class="process-grid">
+      <div class="process-steps">
+        <div class="step">
+          <div class="step-num">01</div>
+          <div>
+            <h4>We meet you, in person.</h4>
+            <p>We get a real feel for your culture, work environment, and the personality that thrives there.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <div>
+            <h4>We screen, hard.</h4>
+            <p>Reference checks, background checks, skills testing, personality assessments — and drug testing on request.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <div>
+            <h4>We deliver in 48 hours.</h4>
+            <p>Top, screened candidates land on your desk within two business days of the job order.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">04</div>
+          <div>
+            <h4>You make the hire.</h4>
+            <p>Fit handles payroll for contract employees and structures fees around what works for your business.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="process-visual">
+        <div class="quote-mark">"</div>
+        <p class="pull-quote">Fit is picky when sending candidates. <em>In fact, 75% of hires are one of the first two we send</em> — and we've maintained those results since our very first client.</p>
+        <div class="quote-attr">
+          <strong>The Fit Recruiting Team</strong>
+          Mobile, Alabama
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <h2>Let's find your<br><em>next great hire.</em></h2>
+    <p>Whether you're hiring or looking, we'd love to sit down with you. Coffee is on us.</p>
+    <div class="cta-buttons">
+      <a href="#" class="btn-primary">
+        Start a Search
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a href="#" class="btn-ghost">Submit Your Resume</a>
+    </div>
+  </section>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#" class="logo-link" aria-label="fit — finding quality people">
+          <img class="logo-img" src="assets/logo.png" width="266" height="174" alt="fit — finding quality people">
+        </a>
+        <p>A boutique recruiting firm headquartered in Mobile, Alabama — placing exceptional talent across the Gulf Coast since 2008.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Navigate</h5>
+        <ul>
+          <li><a href="#">Home</a></li>
+          <li><a href="#">About Us</a></li>
+          <li><a href="#">Open Roles</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>For Candidates</h5>
+        <ul>
+          <li><a href="#">Submit a Resume</a></li>
+          <li><a href="#">Browse Jobs</a></li>
+          <li><a href="#">Career Resources</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Visit Us</h5>
+        <ul>
+          <li>2602 Dauphin Street</li>
+          <li>Mobile, Alabama 36606</li>
+          <li><a href="tel:251-300-3584">251.300.3584</a></li>
+          <li><a href="mailto:jobs@fitrecruiting.com">jobs@fitrecruiting.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 Fit Recruiting. All rights reserved.</div>
+      <div>Site redesigned by CG &amp; Co.</div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
