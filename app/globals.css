@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   FIT RECRUITING — DESIGN TOKENS
+   Colors derived from the vector brand source (fit_mark_spot.ai), not the
+   legacy website. PANTONE 116 U and PANTONE Black 6 C are the two spot
+   colors in the original mark.
+   ========================================================================== */
+
+@theme {
+  /* --- Brand primaries (locked) ----------------------------------------- */
+  /* PANTONE 116 U — the true brand yellow */
+  --color-gold: #ffb602;
+  --color-gold-soft: #ffd166;
+  --color-gold-wash: #fff4d9;
+  /* The only gold permitted as TEXT on the beige ground. The brand yellow
+     (#FFB602) is 1.6:1 there and #e0a002 is 2.14:1 — both fail. This ochre
+     reaches 3.57:1, clearing AA for large text (headline emphasis). */
+  --color-gold-deep: #ad7900;
+
+  /* PANTONE Black 6 C — note this is already a navy-tinted black (hue 212).
+     The entire navy scale below is built on that same hue, so navy reads as
+     an extension of the existing mark rather than a new color. */
+  --color-ink: #111820;
+
+  /* --- Navy scale (hue 212, anchored to PANTONE Black 6 C) --------------- */
+  --color-navy-950: #0e1d2f;
+  --color-navy-900: #14283f;
+  --color-navy: #17314f;
+  --color-navy-700: #24456b;
+  --color-navy-500: #386394;
+  --color-navy-300: #7d9ec4;
+  --color-navy-100: #acbed2;
+  --color-navy-50: #dce6f0;
+
+  /* --- Grays (locked by client — kept exactly) --------------------------- */
+  --color-slate: #808080;
+  --color-body: #666666;
+
+  /* --- Beige canvas (Studio McGee direction) ---------------------------- */
+  --color-canvas: #faf7f2;
+  --color-canvas-warm: #f2ebe0;
+  --color-canvas-deep: #e8dfd1;
+  --color-canvas-edge: #ded2c0;
+
+  /* --- Semantic ---------------------------------------------------------- */
+  --color-line: rgba(23, 49, 79, 0.12);
+  --color-line-soft: rgba(23, 49, 79, 0.07);
+
+  /* --- Typography -------------------------------------------------------- */
+  --font-display: var(--font-cormorant), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* --- Radii (generous, per Studio McGee reference) ---------------------- */
+  --radius-sm: 0.625rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-xl: 2rem;
+  --radius-2xl: 2.75rem;
+
+  /* --- Elevation --------------------------------------------------------- */
+  --shadow-soft: 0 1px 2px rgba(17, 24, 32, 0.04), 0 8px 24px -12px rgba(17, 24, 32, 0.16);
+  --shadow-lift: 0 2px 4px rgba(17, 24, 32, 0.05), 0 24px 48px -20px rgba(17, 24, 32, 0.22);
+}
+
+/* ==========================================================================
+   BASE
+   ========================================================================== */
+
+/* IMPORTANT: these element defaults MUST live inside `@layer base`.
+   Tailwind v4 emits its utilities into `@layer utilities`, and unlayered CSS
+   always beats layered CSS in the cascade regardless of specificity. An
+   unlayered `h1..h4 { color: ... }` here silently overrides every `text-*`
+   utility — which is what made headings render navy-on-navy. */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-body);
+    font-family: var(--font-sans);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Default heading treatment. Any `text-*` utility now correctly wins. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    color: var(--color-navy);
+    font-weight: 300;
+    letter-spacing: -0.015em;
+    line-height: 1.08;
+  }
+
+  /* Any navy surface flips headings to cream by default. Declared once, here,
+     so a new navy section can never silently inherit the navy heading color
+     and render invisible. `text-*` utilities still override this. */
+  .on-navy :is(h1, h2, h3, h4) {
+    color: var(--color-canvas);
+  }
+
+  /* --- Focus: visible everywhere. The audit flagged missing focus states. --- */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-navy);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* On navy surfaces the outline flips to gold to stay visible. */
+  .on-navy :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline-color: var(--color-gold);
+  }
+
+  ::selection {
+    background: var(--color-gold);
+    color: var(--color-ink);
+  }
+}
+
+@layer components {
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 300;
+  }
+}
+
+/* ==========================================================================
+   UTILITIES
+   ========================================================================== */
+
+/* Also layered, so a `text-*` / spacing utility on the same element wins. */
+@layer components {
+
+/* Skip link — keyboard nav was flagged as a gap in the accessibility audit. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--color-navy);
+  color: var(--color-canvas);
+  padding: 0.875rem 1.5rem;
+  border-radius: 0 0 var(--radius-md) 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.skip-link:focus {
+  left: 0;
+}
+
+/* #808080 only reaches 3.70:1 on the beige canvas — fails AA for small text.
+   #666666 (also client-locked) reaches 5.38:1. --color-slate stays in the
+   palette for non-text use: borders, dividers, decorative fills. */
+.eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-body);
+}
+
+/* Thin gold rule used to open sections. */
+.rule-gold::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-gold);
+  margin-bottom: 1.25rem;
+}
+
+/* Grain overlay — keeps large beige fields from looking flat/digital. */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.4;
+  background-image: radial-gradient(circle at 1px 1px, rgba(17, 24, 32, 0.045) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+}

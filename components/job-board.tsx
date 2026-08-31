@@ -1,0 +1,160 @@
+"use client";
+
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { Arrow } from "@/components/ui";
+import type { Job } from "@/lib/content";
+
+export default function JobBoard({ jobs }: { jobs: Job[] }) {
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("All");
+
+  const categories = useMemo(
+    () => ["All", ...Array.from(new Set(jobs.flatMap((j) => j.categories))).sort()],
+    [jobs],
+  );
+
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return jobs.filter((job) => {
+      const matchesCategory = category === "All" || job.categories.includes(category);
+      const matchesQuery =
+        !q ||
+        job.title.toLowerCase().includes(q) ||
+        job.location.toLowerCase().includes(q) ||
+        job.categories.some((c) => c.toLowerCase().includes(q));
+      return matchesCategory && matchesQuery;
+    });
+  }, [jobs, query, category]);
+
+  return (
+    <div>
+      {/* --- Controls --- */}
+      <div className="rounded-[2rem] border border-line-soft bg-canvas-warm/60 p-6 lg:p-8">
+        <label htmlFor="job-search" className="eyebrow mb-3 block">
+          Search roles
+        </label>
+        <div className="relative">
+          <svg
+            aria-hidden="true"
+            className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-body"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.2-3.2" />
+          </svg>
+          <input
+            id="job-search"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Job title, location, or discipline"
+            className="w-full rounded-full border border-line bg-canvas py-4 pl-14 pr-5 text-[0.9375rem] text-navy placeholder:text-body focus:border-navy focus:outline-none"
+          />
+        </div>
+
+        <fieldset className="mt-6">
+          <legend className="eyebrow mb-3">Filter by discipline</legend>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((c) => {
+              const active = c === category;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCategory(c)}
+                  aria-pressed={active}
+                  className={`rounded-full border px-5 py-2.5 text-sm font-medium transition-all ${
+                    active
+                      ? "border-navy bg-navy text-canvas"
+                      : "border-line bg-canvas text-body hover:border-navy/40 hover:text-navy"
+                  }`}
+                >
+                  {c}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      </div>
+
+      {/* --- Result count (announced to screen readers) --- */}
+      <p aria-live="polite" className="mt-8 text-sm text-body">
+        Showing {results.length} {results.length === 1 ? "role" : "roles"}
+        {category !== "All" && ` in ${category}`}
+      </p>
+
+      {/* --- Results --- */}
+      {results.length === 0 ? (
+        <div className="mt-6 rounded-[2rem] border border-dashed border-line bg-canvas-warm/40 px-8 py-20 text-center">
+          <p className="font-display text-3xl font-light text-navy">
+            No roles match that search.
+          </p>
+          <p className="mx-auto mt-4 max-w-md text-body">
+            We place plenty of roles that never make it to the board. Send us your
+            résumé and we&rsquo;ll reach out when something fits.
+          </p>
+          <Link
+            href="/submit-resume"
+            className="mt-8 inline-flex items-center gap-2 rounded-full bg-navy px-7 py-3.5 text-sm font-semibold text-canvas transition-all hover:bg-navy-700"
+          >
+            Submit your résumé
+            <Arrow />
+          </Link>
+        </div>
+      ) : (
+        <ul className="mt-6 space-y-4">
+          {results.map((job) => (
+            <li key={job.slug}>
+              <Link
+                href={`/jobs/${job.slug}`}
+                className="group flex flex-col gap-5 rounded-[1.75rem] border border-line-soft bg-canvas-warm/50 p-7 transition-all duration-300 hover:-translate-y-0.5 hover:border-line hover:bg-canvas-warm hover:shadow-soft sm:flex-row sm:items-center sm:gap-8 lg:p-8"
+              >
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-display text-[1.625rem] font-normal leading-tight text-navy transition-colors group-hover:text-gold-deep">
+                    {job.title}
+                  </h2>
+                  <p className="mt-2 text-sm text-body">
+                    {job.location} · {job.type}
+                  </p>
+                  {job.summary && (
+                    <p className="mt-3 max-w-xl text-[0.9375rem] leading-relaxed text-body">
+                      {job.summary}
+                    </p>
+                  )}
+                  <ul className="mt-4 flex flex-wrap gap-2">
+                    {job.categories.map((c) => (
+                      <li
+                        key={c}
+                        className="rounded-full bg-gold/15 px-3 py-1 text-xs font-medium text-navy-700"
+                      >
+                        {c}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                {job.salary && (
+                  <p className="shrink-0 font-display text-xl font-light text-navy">
+                    {job.salary}
+                  </p>
+                )}
+                <span
+                  aria-hidden="true"
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line text-navy transition-all duration-300 group-hover:border-gold group-hover:bg-gold group-hover:text-ink"
+                >
+                  <Arrow />
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
