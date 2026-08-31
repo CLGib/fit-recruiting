@@ -1,6 +1,7 @@
 "use server";
 
-import { Resend } from "resend";
+import { RESUME_BUCKET, isSupabaseConfigured } from "@/lib/supabase/config";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 export type SubmitState = {
   status: "idle" | "success" | "error";
@@ -10,9 +11,13 @@ export type SubmitState = {
 };
 
 /**
- * 4 MB, not 5. Vercel Functions reject bodies over 4.5 MB at the platform
- * level, so this leaves room for multipart overhead and keeps the failure
- * inside our own friendly validation.
+ * 4 MB, not 5. Vercel Functions reject request bodies over 4.5 MB at the
+ * platform level (413), before this action ever runs, so this leaves room for
+ * multipart overhead and keeps the failure inside our own friendly validation.
+ *
+ * Raising the cap means uploading straight from the browser to Supabase with a
+ * signed URL, so the file never crosses a Vercel function. Worth doing if Fit
+ * starts seeing large portfolio-style résumés; unnecessary at 4 MB.
  *
  * NOT exported: a "use server" module may only export async functions.
  * components/resume-form.tsx mirrors this value for the client-side check.
@@ -27,13 +32,30 @@ const ALLOWED = new Map<string, string>([
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-/** Where applications land. Verified sending domain required for `from`. */
-const TO = process.env.APPLY_TO_EMAIL ?? "jobs@fitrecruiting.com";
-const FROM = process.env.APPLY_FROM_EMAIL ?? "Fit Recruiting <apply@fitrecruiting.com>";
+const FALLBACK =
+  "Our online intake isn't available right now. Please email your résumé to jobs@fitrecruiting.com or call 251.300.3584 and we'll make sure it reaches the right person.";
 
-/** Never interpolate raw input into a mail header. */
-function headerSafe(value: string): string {
-  return value.replace(/[\r\n]+/g, " ").trim();
+/**
+ * Optional notification. Storage is the source of truth; this exists so a
+ * submission does not sit unseen in a bucket nobody is watching. Silent no-op
+ * when RESEND_API_KEY is absent, and a failure here never fails the submission,
+ * because the résumé is already safely stored by this point.
+ */
+async function notify(summary: string, subject: string, replyTo: string) {
+  if (!process.env.RESEND_API_KEY) return;
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({
+      from: process.env.APPLY_FROM_EMAIL ?? "Fit Recruiting <apply@fitrecruiting.com>",
+      to: [process.env.APPLY_TO_EMAIL ?? "jobs@fitrecruiting.com"],
+      replyTo,
+      subject: subject.replace(/[\r\n]+/g, " ").trim(),
+      text: summary,
+    });
+  } catch (err) {
+    console.error("[submitResume] notification failed (submission was saved):", err);
+  }
 }
 
 export async function submitResume(
@@ -75,52 +97,69 @@ export async function submitResume(
     return { status: "error", message: "Please check the highlighted fields.", errors };
   }
 
-  const fallback =
-    "Our online intake isn't available right now. Please email your résumé to jobs@fitrecruiting.com or call 251.300.3584 and we'll make sure it reaches the right person.";
-
-  if (!process.env.RESEND_API_KEY) {
+  if (!isSupabaseConfigured()) {
     // Fail honestly rather than pretending the submission landed.
-    return { status: "error", message: fallback };
+    return { status: "error", message: FALLBACK };
   }
 
   const resume = file as File;
   const extension = ALLOWED.get(resume.type)!;
-  const name = `${firstName} ${lastName}`;
 
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    const supabase = createSupabaseAdminClient();
 
-    const lines = [
-      `Name:  ${name}`,
-      `Email: ${email}`,
-      phone ? `Phone: ${phone}` : null,
-      role ? `Role:  ${role}` : "Role:  General submission (no specific role)",
-      "",
-      message ? `Message:\n${message}` : "No message provided.",
-      "",
-      `Résumé attached as ${resume.name} (${Math.round(resume.size / 1024)} KB).`,
-      "Submitted via the fitrecruiting.com website.",
-    ].filter(Boolean);
+    // Insert first so the row id can namespace the stored file.
+    const { data: row, error: insertError } = await supabase
+      .from("candidate_submissions")
+      .insert({
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        phone: phone || null,
+        role_slug: role || null,
+        message: message || null,
+        status: "new",
+      })
+      .select("id")
+      .single();
 
-    const { error } = await resend.emails.send({
-      from: FROM,
-      to: [TO],
-      // Recruiters can reply straight to the candidate.
-      replyTo: email,
-      subject: headerSafe(
-        role ? `Application: ${name} — ${role}` : `Résumé submission: ${name}`,
-      ),
-      text: lines.join("\n"),
-      attachments: [
-        {
-          filename: `${firstName}-${lastName}-resume.${extension}`.toLowerCase(),
-          content: Buffer.from(await resume.arrayBuffer()),
-          contentType: resume.type,
-        },
-      ],
-    });
+    if (insertError || !row) throw insertError ?? new Error("Insert returned no row.");
 
-    if (error) throw new Error(`${error.name}: ${error.message}`);
+    const path = `${row.id}/resume.${extension}`;
+    const { error: uploadError } = await supabase.storage
+      .from(RESUME_BUCKET)
+      .upload(path, resume, { contentType: resume.type, upsert: false });
+
+    if (uploadError) {
+      // Never leave a row pointing at a file that is not there. A submission
+      // with no résumé looks answered but cannot be actioned.
+      await supabase.from("candidate_submissions").delete().eq("id", row.id);
+      throw uploadError;
+    }
+
+    await supabase
+      .from("candidate_submissions")
+      .update({ resume_path: path, resume_filename: resume.name })
+      .eq("id", row.id);
+
+    const name = `${firstName} ${lastName}`;
+    await notify(
+      [
+        `Name:  ${name}`,
+        `Email: ${email}`,
+        phone ? `Phone: ${phone}` : null,
+        role ? `Role:  ${role}` : "Role:  General submission (no specific role)",
+        "",
+        message ? `Message:\n${message}` : "No message provided.",
+        "",
+        `Résumé stored at ${path} in the "${RESUME_BUCKET}" bucket.`,
+        "Open it from the Supabase dashboard under Storage.",
+      ]
+        .filter(Boolean)
+        .join("\n"),
+      role ? `Application: ${name} — ${role}` : `Résumé submission: ${name}`,
+      email,
+    );
 
     return {
       status: "success",
@@ -128,9 +167,9 @@ export async function submitResume(
         "Thank you. Your résumé is in, a real person here in Mobile will read it, and we'll reach out when something fits.",
     };
   } catch (err) {
-    // Log for us, stay useful for them. Never swallow this silently: a dropped
-    // application is a lost candidate.
-    console.error("[submitResume] delivery failed:", err);
-    return { status: "error", message: fallback };
+    // Log for us, stay useful for them. A dropped application is a lost
+    // candidate, so this must never fail silently.
+    console.error("[submitResume] failed:", err);
+    return { status: "error", message: FALLBACK };
   }
 }
