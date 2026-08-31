@@ -30,8 +30,13 @@ export default function SiteFooter() {
               intact) rather than boxing the full-colour logo in a white card,
               which read as accidental. */}
           <div>
+            {/* PROPOSED VARIANT, pending Chambliss's approval: the glyph inside
+                the mark is cream rather than near-black. The near-black is
+                hue 212, the same hue as the navy, so at small sizes the glyph
+                blended into the background and the mark stopped reading as
+                "fi". Revert to fit-lockup-reversed.png if she prefers. */}
             <Image
-              src="/brand/fit-lockup-reversed.png"
+              src="/brand/fit-lockup-reversed-light-glyph.png"
               alt="Fit Recruiting, finding quality people"
               width={2213}
               height={1444}

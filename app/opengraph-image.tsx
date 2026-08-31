@@ -17,8 +17,14 @@ export const contentType = "image/png";
  */
 
 function logoDataUri() {
-  // Reversed lockup: cream wordmark, yellow mark intact. No cream card needed.
-  const file = path.join(process.cwd(), "public", "brand", "fit-lockup-reversed.png");
+  // Reversed lockup with the cream glyph variant (pending approval). See the
+  // note in components/site-footer.tsx.
+  const file = path.join(
+    process.cwd(),
+    "public",
+    "brand",
+    "fit-lockup-reversed-light-glyph.png",
+  );
   return `data:image/png;base64,${fs.readFileSync(file).toString("base64")}`;
 }
 

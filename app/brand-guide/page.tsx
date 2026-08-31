@@ -148,8 +148,8 @@ export default function BrandGuidePage() {
                   On dark surfaces
                 </p>
                 <Image
-                  src="/brand/fit-lockup-reversed.png"
-                  alt="The reversed Fit lockup: cream wordmark and tagline with the yellow mark left intact"
+                  src="/brand/fit-lockup-reversed-light-glyph.png"
+                  alt="The reversed Fit lockup with a cream glyph inside the yellow mark"
                   width={2213}
                   height={1444}
                   sizes="260px"
@@ -158,9 +158,52 @@ export default function BrandGuidePage() {
                 <p className="mt-6 leading-relaxed text-navy-100">
                   The wordmark is near-black and disappears on navy, so dark
                   surfaces use the reversed lockup. The wordmark and tagline knock
-                  out to cream and the yellow mark stays exactly as it is. Never
-                  box the full-colour logo in a white panel.
+                  out to cream. Never box the full-colour logo in a white panel.
                 </p>
+
+                <div className="mt-8 border-t border-white/10 pt-7">
+                  <p className="mb-4 text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-gold">
+                    Awaiting approval
+                  </p>
+                  <div className="flex flex-wrap items-end gap-8">
+                    <div>
+                      <Image
+                        src="/brand/fit-mark.png"
+                        alt="The current mark on navy, with a near-black glyph"
+                        width={1750}
+                        height={2117}
+                        sizes="120px"
+                        className="h-14 w-auto"
+                      />
+                      <p className="mt-3 text-xs text-navy-100">Current glyph</p>
+                    </div>
+                    <div>
+                      <Image
+                        src="/brand/fit-mark-light-glyph.png"
+                        alt="The proposed mark on navy, with a cream glyph"
+                        width={1750}
+                        height={2117}
+                        sizes="120px"
+                        className="h-14 w-auto"
+                      />
+                      <p className="mt-3 text-xs text-gold">Proposed</p>
+                    </div>
+                  </div>
+                  <p className="mt-6 leading-relaxed text-navy-100">
+                    The glyph inside the mark is near-black, which sits at the same
+                    hue as the navy. On dark surfaces it blends into the background
+                    and the mark stops reading as &ldquo;fi&rdquo; at small sizes.
+                    The proposed variant knocks the glyph out to cream so it matches
+                    the wordmark. It applies to dark surfaces only. The primary mark
+                    on light backgrounds does not change.
+                  </p>
+                  <p className="mt-4 text-sm leading-relaxed text-navy-100/85">
+                    Note: this variant was produced by recolouring a render, so it
+                    is web-ready but not a true vector. If approved, it should be
+                    rebuilt from the original artwork before any print or
+                    embroidery use.
+                  </p>
+                </div>
               </div>
 
               <div className="rounded-3xl border border-line-soft bg-canvas-warm/50 p-10">
