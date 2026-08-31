@@ -1,11 +1,23 @@
 "use client";
 
-import { useActionState, useId } from "react";
+import { useActionState, useId, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { submitResume, type SubmitState } from "@/app/submit-resume/actions";
 import { Arrow } from "@/components/ui";
 
 const INITIAL: SubmitState = { status: "idle" };
+
+/**
+ * Checked in the browser as well as on the server. Vercel rejects bodies over
+ * 4.5 MB before our action ever runs, so catching it here is what turns a dead
+ * request into an instant, readable message.
+ */
+const MAX_BYTES = 4 * 1024 * 1024;
+const ALLOWED_TYPES = new Set([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
 
 const FIELD =
   "w-full rounded-2xl border border-line bg-canvas px-5 py-4 text-[0.9375rem] text-navy placeholder:text-body transition-colors focus:border-navy focus:outline-none";
@@ -35,8 +47,24 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 
 export default function ResumeForm({ role }: { role?: string }) {
   const [state, formAction] = useActionState(submitResume, INITIAL);
+  const [fileError, setFileError] = useState<string | null>(null);
   const uid = useId();
   const errors = state.errors ?? {};
+
+  function checkFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return setFileError(null);
+    if (f.size > MAX_BYTES) {
+      // Clear it so a doomed request can never be submitted.
+      e.target.value = "";
+      return setFileError("That file is larger than 4 MB. Please attach a smaller copy.");
+    }
+    if (!ALLOWED_TYPES.has(f.type)) {
+      e.target.value = "";
+      return setFileError("Please attach a PDF, DOC, or DOCX file.");
+    }
+    setFileError(null);
+  }
 
   if (state.status === "success") {
     return (
@@ -151,14 +179,15 @@ export default function ResumeForm({ role }: { role?: string }) {
           type="file"
           accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           required
-          aria-invalid={Boolean(errors.resume)}
-          aria-describedby={`${uid}-resume-hint${errors.resume ? ` ${uid}-resume-err` : ""}`}
+          onChange={checkFile}
+          aria-invalid={Boolean(errors.resume || fileError)}
+          aria-describedby={`${uid}-resume-hint${errors.resume || fileError ? ` ${uid}-resume-err` : ""}`}
           className="w-full cursor-pointer rounded-2xl border border-dashed border-line bg-canvas px-5 py-4 text-[0.9375rem] text-body transition-colors file:mr-4 file:cursor-pointer file:rounded-full file:border-0 file:bg-navy file:px-5 file:py-2.5 file:text-sm file:font-semibold file:text-canvas hover:border-navy/40"
         />
         <p id={`${uid}-resume-hint`} className="mt-2 text-sm text-body">
-          PDF, DOC, or DOCX. 5 MB maximum.
+          PDF, DOC, or DOCX. 4 MB maximum.
         </p>
-        <FieldError id={`${uid}-resume-err`} message={errors.resume} />
+        <FieldError id={`${uid}-resume-err`} message={fileError ?? errors.resume} />
       </div>
 
       <div>

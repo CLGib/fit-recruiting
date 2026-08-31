@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import JobBoard from "@/components/job-board";
 import { Container, Section } from "@/components/ui";
-import { ACTIVE_JOBS } from "@/lib/content";
+import { listActiveJobs } from "@/lib/jobs/source";
+
+// Jobs come from the source of record, so the board refreshes without a deploy.
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Open Roles",
@@ -9,7 +12,9 @@ export const metadata: Metadata = {
     "Browse current openings placed by Fit Recruiting across Mobile, Baldwin County, and the Mississippi Gulf Coast.",
 };
 
-export default function JobsPage() {
+export default async function JobsPage() {
+  const jobs = await listActiveJobs();
+
   return (
     <Section className="pt-14 lg:pt-20">
       <Container>
@@ -26,7 +31,7 @@ export default function JobsPage() {
         </header>
 
         <div className="mt-14">
-          <JobBoard jobs={ACTIVE_JOBS} />
+          <JobBoard jobs={jobs} />
         </div>
       </Container>
     </Section>

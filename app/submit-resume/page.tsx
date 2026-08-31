@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import ResumeForm from "@/components/resume-form";
 import { Container, Section } from "@/components/ui";
-import { ACTIVE_JOBS, CONTACT } from "@/lib/content";
+import { CONTACT } from "@/lib/content";
+import { listActiveJobs } from "@/lib/jobs/source";
 
 export const metadata: Metadata = {
   title: "Submit a Résumé",
@@ -15,7 +16,7 @@ export default async function SubmitResumePage({
   searchParams: Promise<{ role?: string }>;
 }) {
   const { role } = await searchParams;
-  const matched = role ? ACTIVE_JOBS.find((j) => j.slug === role) : undefined;
+  const matched = role ? (await listActiveJobs()).find((j) => j.slug === role) : undefined;
 
   return (
     <Section className="pt-14 lg:pt-20">

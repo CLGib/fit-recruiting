@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Arrow } from "@/components/ui";
-import type { Job } from "@/lib/content";
+import type { Job } from "@/lib/jobs/types";
 
 export default function JobBoard({ jobs }: { jobs: Job[] }) {
   const [query, setQuery] = useState("");

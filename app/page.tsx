@@ -4,14 +4,18 @@ import DisciplineIcon from "@/components/discipline-icon";
 import BrandStamp from "@/components/brand-stamp";
 import { Button, Container, Section, SectionHeading, Arrow } from "@/components/ui";
 import {
-  ACTIVE_JOBS,
   CANDIDATE_POINTS,
   CANDIDATE_PROMISE,
   PROCESS,
   SPECIALTIES,
 } from "@/lib/content";
+import { listActiveJobs } from "@/lib/jobs/source";
 
-export default function HomePage() {
+export const revalidate = 300;
+
+export default async function HomePage() {
+  const jobs = await listActiveJobs();
+
   return (
     <>
       {/* ================================================================== */}
@@ -99,13 +103,13 @@ export default function HomePage() {
               href="/jobs"
               className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-navy transition-colors hover:text-gold-deep"
             >
-              Search all {ACTIVE_JOBS.length} openings
+              Search all {jobs.length} openings
               <Arrow />
             </Link>
           </div>
 
           <ul className="mt-12 grid gap-4 sm:grid-cols-2">
-            {ACTIVE_JOBS.map((job) => (
+            {jobs.map((job) => (
               <li key={job.slug}>
                 <Link
                   href={`/jobs/${job.slug}`}

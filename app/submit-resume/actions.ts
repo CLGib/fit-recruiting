@@ -1,7 +1,6 @@
 "use server";
 
-import { RESUME_BUCKET, isSupabaseConfigured } from "@/lib/supabase/config";
-import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { Resend } from "resend";
 
 export type SubmitState = {
   status: "idle" | "success" | "error";
@@ -10,7 +9,15 @@ export type SubmitState = {
   errors?: Record<string, string>;
 };
 
-const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+/**
+ * 4 MB, not 5. Vercel Functions reject bodies over 4.5 MB at the platform
+ * level, so this leaves room for multipart overhead and keeps the failure
+ * inside our own friendly validation.
+ *
+ * NOT exported: a "use server" module may only export async functions.
+ * components/resume-form.tsx mirrors this value for the client-side check.
+ */
+const MAX_BYTES = 4 * 1024 * 1024;
 
 const ALLOWED = new Map<string, string>([
   ["application/pdf", "pdf"],
@@ -20,11 +27,20 @@ const ALLOWED = new Map<string, string>([
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+/** Where applications land. Verified sending domain required for `from`. */
+const TO = process.env.APPLY_TO_EMAIL ?? "jobs@fitrecruiting.com";
+const FROM = process.env.APPLY_FROM_EMAIL ?? "Fit Recruiting <apply@fitrecruiting.com>";
+
+/** Never interpolate raw input into a mail header. */
+function headerSafe(value: string): string {
+  return value.replace(/[\r\n]+/g, " ").trim();
+}
+
 export async function submitResume(
   _prev: SubmitState,
   formData: FormData,
 ): Promise<SubmitState> {
-  // Honeypot — bots fill hidden fields, humans don't.
+  // Honeypot. Bots fill hidden fields, humans do not.
   if (formData.get("company_website")) {
     return { status: "success", message: "Thanks, we'll be in touch." };
   }
@@ -50,7 +66,7 @@ export async function submitResume(
   if (!(file instanceof File) || file.size === 0) {
     errors.resume = "Please attach your résumé.";
   } else if (file.size > MAX_BYTES) {
-    errors.resume = "That file is larger than 5 MB. Please attach a smaller copy.";
+    errors.resume = "That file is larger than 4 MB. Please attach a smaller copy.";
   } else if (!ALLOWED.has(file.type)) {
     errors.resume = "Please attach a PDF, DOC, or DOCX file.";
   }
@@ -59,66 +75,62 @@ export async function submitResume(
     return { status: "error", message: "Please check the highlighted fields.", errors };
   }
 
-  if (!isSupabaseConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    // Fail loudly and honestly rather than pretending the submission landed.
-    return {
-      status: "error",
-      message:
-        "Our résumé intake isn't available right now. Please email your résumé to jobs@fitrecruiting.com or call 251.300.3584 and we'll make sure it gets to the right person.",
-    };
+  const fallback =
+    "Our online intake isn't available right now. Please email your résumé to jobs@fitrecruiting.com or call 251.300.3584 and we'll make sure it reaches the right person.";
+
+  if (!process.env.RESEND_API_KEY) {
+    // Fail honestly rather than pretending the submission landed.
+    return { status: "error", message: fallback };
   }
 
   const resume = file as File;
   const extension = ALLOWED.get(resume.type)!;
+  const name = `${firstName} ${lastName}`;
 
   try {
-    const supabase = createSupabaseAdminClient();
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
-    // Insert first so the row id can namespace the stored file.
-    const { data: row, error: insertError } = await supabase
-      .from("candidate_submissions")
-      .insert({
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        phone: phone || null,
-        role_slug: role || null,
-        message: message || null,
-        status: "new",
-      })
-      .select("id")
-      .single();
+    const lines = [
+      `Name:  ${name}`,
+      `Email: ${email}`,
+      phone ? `Phone: ${phone}` : null,
+      role ? `Role:  ${role}` : "Role:  General submission (no specific role)",
+      "",
+      message ? `Message:\n${message}` : "No message provided.",
+      "",
+      `Résumé attached as ${resume.name} (${Math.round(resume.size / 1024)} KB).`,
+      "Submitted via the fitrecruiting.com website.",
+    ].filter(Boolean);
 
-    if (insertError || !row) throw insertError ?? new Error("Insert returned no row.");
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to: [TO],
+      // Recruiters can reply straight to the candidate.
+      replyTo: email,
+      subject: headerSafe(
+        role ? `Application: ${name} — ${role}` : `Résumé submission: ${name}`,
+      ),
+      text: lines.join("\n"),
+      attachments: [
+        {
+          filename: `${firstName}-${lastName}-resume.${extension}`.toLowerCase(),
+          content: Buffer.from(await resume.arrayBuffer()),
+          contentType: resume.type,
+        },
+      ],
+    });
 
-    const path = `${row.id}/resume.${extension}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from(RESUME_BUCKET)
-      .upload(path, resume, { contentType: resume.type, upsert: false });
-
-    if (uploadError) {
-      // Don't leave an orphan row pointing at a file that isn't there.
-      await supabase.from("candidate_submissions").delete().eq("id", row.id);
-      throw uploadError;
-    }
-
-    await supabase
-      .from("candidate_submissions")
-      .update({ resume_path: path, resume_filename: resume.name })
-      .eq("id", row.id);
+    if (error) throw new Error(`${error.name}: ${error.message}`);
 
     return {
       status: "success",
       message:
         "Thank you. Your résumé is in, a real person here in Mobile will read it, and we'll reach out when something fits.",
     };
-  } catch (error) {
-    console.error("[submitResume] failed:", error);
-    return {
-      status: "error",
-      message:
-        "Something went wrong on our end. Please email jobs@fitrecruiting.com or call 251.300.3584 and we'll take it from there.",
-    };
+  } catch (err) {
+    // Log for us, stay useful for them. Never swallow this silently: a dropped
+    // application is a lost candidate.
+    console.error("[submitResume] delivery failed:", err);
+    return { status: "error", message: fallback };
   }
 }

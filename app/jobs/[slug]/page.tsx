@@ -2,17 +2,23 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Arrow, Container, Section } from "@/components/ui";
-import { ACTIVE_JOBS, CONTACT, JOBS } from "@/lib/content";
+import { CONTACT } from "@/lib/content";
+import { getJob, listActiveJobs } from "@/lib/jobs/source";
+
+export const revalidate = 300;
 
 type Params = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return ACTIVE_JOBS.map((job) => ({ slug: job.slug }));
+// dynamicParams stays on (the default) so a role added after the last build
+// still renders on first request rather than 404ing.
+export async function generateStaticParams() {
+  const jobs = await listActiveJobs();
+  return jobs.map((job) => ({ slug: job.slug }));
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
-  const job = JOBS.find((j) => j.slug === slug);
+  const job = await getJob(slug);
   if (!job) return { title: "Role not found" };
   return {
     title: job.title,
@@ -32,12 +38,12 @@ function formatDate(iso: string) {
 
 export default async function JobDetailPage({ params }: Params) {
   const { slug } = await params;
-  const job = JOBS.find((j) => j.slug === slug);
+  const job = await getJob(slug);
   if (!job || job.status !== "active") notFound();
 
-  const related = ACTIVE_JOBS.filter(
-    (j) => j.slug !== job.slug && j.categories.some((c) => job.categories.includes(c)),
-  ).slice(0, 3);
+  const related = (await listActiveJobs())
+    .filter((j) => j.slug !== job.slug && j.categories.some((c) => job.categories.includes(c)))
+    .slice(0, 3);
 
   return (
     <Section className="pt-10 lg:pt-14">

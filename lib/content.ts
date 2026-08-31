@@ -10,9 +10,7 @@
  *  - No positioning against national agencies.
  *  - By appointment only. Never invite people to drop in.
  *
- * JOB DATA: titles/locations/categories/dates transcribed from the live WP Job
- * Manager admin (2026-08-26). Descriptions are OPTIONAL and unset on purpose —
- * the real ones live in WordPress and must be imported, never rewritten.
+ * Job data lives in lib/jobs/, behind a JobSource adapter.
  */
 
 export const CONTACT = {
@@ -36,136 +34,6 @@ export const CANDIDATE_PROMISE = {
   hook: "Looking for what's next?",
   line: "Working with Fit never costs you a thing.",
 } as const;
-
-export type JobStatus = "active" | "pending" | "expired";
-
-export type Job = {
-  slug: string;
-  title: string;
-  location: string;
-  type: "Full Time" | "Part Time" | "Contract" | "Temp-to-Hire";
-  categories: string[];
-  salary: string | null;
-  postedAt: string;
-  expiresAt: string;
-  status: JobStatus;
-  summary?: string;
-  responsibilities?: string[];
-  requirements?: string[];
-};
-
-export const JOBS: Job[] = [
-  {
-    slug: "tax-accountant-mobile-al",
-    title: "Tax Accountant",
-    location: "Mobile, AL",
-    type: "Full Time",
-    categories: ["Wholesale Building Materials"],
-    salary: null,
-    postedAt: "2026-06-24",
-    expiresAt: "2026-08-31",
-    status: "active",
-  },
-  {
-    slug: "senior-purchasing-manager-spanish-fort-al",
-    title: "Senior Purchasing Manager",
-    location: "Spanish Fort, AL",
-    type: "Full Time",
-    categories: ["Manufacturing"],
-    salary: null,
-    postedAt: "2026-06-24",
-    expiresAt: "2026-08-31",
-    status: "active",
-  },
-  {
-    slug: "inside-sales-representative-spanish-fort-al",
-    title: "Inside Sales Representative",
-    location: "Spanish Fort, AL",
-    type: "Full Time",
-    categories: ["Manufacturing", "Sales & Marketing"],
-    salary: null,
-    postedAt: "2026-06-24",
-    expiresAt: "2026-08-31",
-    status: "active",
-  },
-  {
-    slug: "accounts-receivable-supervisor-mobile-al",
-    title: "Accounts Receivable Supervisor",
-    location: "Mobile, AL",
-    type: "Full Time",
-    categories: [
-      "Accounting / Finance",
-      "Construction / Facilities",
-      "Manufacturing",
-    ],
-    salary: null,
-    postedAt: "2026-06-24",
-    expiresAt: "2026-08-31",
-    status: "active",
-  },
-  {
-    slug: "legal-assistant-mobile-al",
-    title: "Legal Assistant",
-    location: "Mobile, AL",
-    type: "Full Time",
-    categories: ["Legal Services"],
-    salary: null,
-    postedAt: "2026-06-24",
-    expiresAt: "2026-08-31",
-    status: "active",
-  },
-  {
-    slug: "business-operations-analyst-mobile-al",
-    title: "Business Operations Analyst",
-    location: "Mobile, AL",
-    type: "Full Time",
-    categories: ["Insurance"],
-    salary: null,
-    postedAt: "2026-06-24",
-    expiresAt: "2026-08-31",
-    status: "active",
-  },
-  {
-    slug: "accounts-payable-supervisor-mobile-al",
-    title: "Accounts Payable Supervisor",
-    location: "Mobile, AL",
-    type: "Full Time",
-    categories: ["Accounting / Finance"],
-    salary: null,
-    postedAt: "2026-05-29",
-    expiresAt: "2026-08-31",
-    status: "pending",
-  },
-  {
-    slug: "operations-manager-mobile-al",
-    title: "Operations Manager",
-    location: "Mobile, AL",
-    type: "Full Time",
-    categories: ["Construction / Facilities", "Wholesale Building Materials"],
-    salary: null,
-    postedAt: "2026-05-28",
-    expiresAt: "2026-06-30",
-    status: "expired",
-  },
-  {
-    slug: "executive-director-mobile-al",
-    title: "Executive Director",
-    location: "Mobile, AL",
-    type: "Full Time",
-    categories: ["Executive", "Non-Profit"],
-    salary: null,
-    postedAt: "2026-03-25",
-    expiresAt: "2026-06-30",
-    status: "expired",
-  },
-];
-
-/** Only these appear on the public site. */
-export const ACTIVE_JOBS = JOBS.filter((j) => j.status === "active");
-
-export const INDUSTRIES = Array.from(
-  new Set(ACTIVE_JOBS.flatMap((j) => j.categories)),
-).sort();
 
 /**
  * Functional disciplines Fit recruits for.
