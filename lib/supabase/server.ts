@@ -11,7 +11,7 @@ import { SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL, isSupabaseConfigured } from ".
 export function createSupabaseAdminClient() {
   if (!isSupabaseConfigured()) {
     throw new Error(
-      "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+      "Supabase is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
     );
   }
   return createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!, {
