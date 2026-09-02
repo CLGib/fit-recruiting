@@ -5,6 +5,7 @@ import { Container, Section } from "@/components/ui";
 import { isAllowedEmail } from "@/lib/auth/access";
 import { RESUME_BUCKET, isSupabaseConfigured } from "@/lib/supabase/config";
 import { getSessionUser } from "@/lib/supabase/auth-client";
+import { isAdminPreview, PREVIEW_ROWS } from "@/lib/admin/preview";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -41,44 +42,57 @@ function when(iso: string) {
 }
 
 export default async function AdminPage() {
-  // Two gates: a valid session, and an allowlisted address. A session alone is
-  // not enough, since anyone can request a magic link for their own address.
-  const user = await getSessionUser();
-  if (!user) redirect("/admin/login");
-  if (!isAllowedEmail(user.email)) redirect("/admin/login?error=denied");
+  // Local design preview. Unreachable in any deployed build: see lib/admin/preview.
+  const preview = isAdminPreview();
 
-  if (!isSupabaseConfigured()) {
-    return (
-      <Section className="pt-14">
-        <Container>
-          <p className="text-body">Supabase is not configured.</p>
-        </Container>
-      </Section>
+  let rows: Row[] = [];
+  let error: { message: string } | null = null;
+  let signedInAs = "preview mode";
+  const links = new Map<string, string>();
+
+  if (preview) {
+    rows = PREVIEW_ROWS as Row[];
+  } else {
+    // Two gates: a valid session, and an allowlisted address. A session alone is
+    // not enough, since anyone can request a magic link for their own address.
+    const user = await getSessionUser();
+    if (!user) redirect("/admin/login");
+    if (!isAllowedEmail(user.email)) redirect("/admin/login?error=denied");
+    signedInAs = user.email ?? "unknown";
+
+    if (!isSupabaseConfigured()) {
+      return (
+        <Section className="pt-14">
+          <Container>
+            <p className="text-body">Supabase is not configured.</p>
+          </Container>
+        </Section>
+      );
+    }
+
+    const supabase = createSupabaseAdminClient();
+    const res = await supabase
+      .from("candidate_submissions")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    rows = (res.data ?? []) as Row[];
+    error = res.error;
+
+    // Signed URLs are generated per request and expire, so a résumé link
+    // cannot be forwarded or bookmarked into a permanent public URL.
+    await Promise.all(
+      rows
+        .filter((r) => r.resume_path)
+        .map(async (r) => {
+          const { data: signed } = await supabase.storage
+            .from(RESUME_BUCKET)
+            .createSignedUrl(r.resume_path!, 60 * 10);
+          if (signed?.signedUrl) links.set(r.id, signed.signedUrl);
+        }),
     );
   }
-
-  const supabase = createSupabaseAdminClient();
-  const { data, error } = await supabase
-    .from("candidate_submissions")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(200);
-
-  const rows = (data ?? []) as Row[];
-
-  // Signed URLs are generated per request and expire, so a résumé link cannot
-  // be forwarded or bookmarked into a permanent public URL.
-  const links = new Map<string, string>();
-  await Promise.all(
-    rows
-      .filter((r) => r.resume_path)
-      .map(async (r) => {
-        const { data: signed } = await supabase.storage
-          .from(RESUME_BUCKET)
-          .createSignedUrl(r.resume_path!, 60 * 10);
-        if (signed?.signedUrl) links.set(r.id, signed.signedUrl);
-      }),
-  );
 
   return (
     <Section className="pt-12 lg:pt-16">
@@ -91,10 +105,10 @@ export default async function AdminPage() {
             </h1>
             <p className="mt-4 text-body">
               {rows.length} {rows.length === 1 ? "submission" : "submissions"}, newest first.
-              Signed in as {user.email}.
+              Signed in as {signedInAs}.
             </p>
           </div>
-          <form action={signOut}>
+          <form action={signOut} hidden={preview}>
             <button
               type="submit"
               className="rounded-full border border-line px-6 py-3 text-sm font-semibold text-navy transition-all hover:border-navy hover:bg-navy hover:text-canvas"
@@ -103,6 +117,17 @@ export default async function AdminPage() {
             </button>
           </form>
         </div>
+
+        {preview && (
+          <p
+            role="status"
+            className="mt-8 rounded-2xl border border-dashed border-line bg-canvas-warm/60 px-6 py-5 text-[0.9375rem] leading-relaxed text-body"
+          >
+            <span className="font-semibold text-navy">Design preview.</span> These
+            are invented sample records, not real submissions, and this mode only
+            runs locally. Résumé links are inert here.
+          </p>
+        )}
 
         {error && (
           <p role="alert" className="mt-8 rounded-2xl border border-[#e0b4ab] bg-[#fbeeeb] px-6 py-5 text-[#8c3225]">
@@ -189,6 +214,10 @@ export default async function AdminPage() {
                         <path d="M12 3v13M7 12l5 5 5-5M4 21h16" />
                       </svg>
                     </a>
+                  ) : preview && r.resume_path ? (
+                    <span className="inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-line px-6 py-3 text-sm font-semibold text-body">
+                      Open résumé (inert in preview)
+                    </span>
                   ) : (
                     <p className="text-sm text-body">No résumé file on this record.</p>
                   )}
