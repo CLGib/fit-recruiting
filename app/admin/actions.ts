@@ -108,10 +108,22 @@ export async function verifyLoginCode(
 
   try {
     const supabase = await createSupabaseAuthClient();
-    const { data, error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
-    if (error || !data.user) {
+
+    // Codes reach us two ways and Supabase types them differently:
+    // signInWithOtp issues "email", admin.generateLink issues "magiclink".
+    // Try both so a phone-issued code works in the same box.
+    let user = null;
+    for (const type of ["email", "magiclink"] as const) {
+      const { data, error } = await supabase.auth.verifyOtp({ email, token, type });
+      if (!error && data.user) {
+        user = data.user;
+        break;
+      }
+    }
+    if (!user) {
       return { status: "error", message: "That code is not valid or has expired." };
     }
+    const data = { user };
     if (!isAllowedEmail(data.user.email)) {
       await supabase.auth.signOut();
       return { status: "error", message: "That code is not valid." };
