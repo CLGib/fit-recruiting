@@ -25,11 +25,15 @@ const inter = Inter({
  * live domain made link previews point at fitrecruiting.com/opengraph-image,
  * which doesn't exist there — so every shared link fell back to a broken image.
  *
- * At launch, set NEXT_PUBLIC_SITE_URL=https://fitrecruiting.com in the Vercel
- * project once the real domain is attached.
+ * At launch, set SITE_URL=https://fitrecruiting.com in the Vercel project once
+ * the real domain is attached.
+ *
+ * Not NEXT_PUBLIC_: every consumer is server side, so there is no reason to
+ * inline it into the client bundle. Vercel also refuses to mark a public-
+ * prefixed variable as a Secret, since the prefix exposes it by definition.
  */
 const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ??
+  process.env.SITE_URL ??
   (process.env.VERCEL_PROJECT_PRODUCTION_URL
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : "http://localhost:3000");

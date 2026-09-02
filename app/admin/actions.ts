@@ -37,7 +37,7 @@ export async function requestLoginLink(
 
   try {
     const supabase = await createSupabaseAuthClient();
-    const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    const origin = process.env.SITE_URL ?? "http://localhost:3000";
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
