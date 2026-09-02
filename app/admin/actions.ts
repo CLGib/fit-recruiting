@@ -33,7 +33,15 @@ export async function requestLoginLink(
       message: "Admin access is not configured yet. Set ADMIN_ALLOWED_EMAILS.",
     };
   }
-  if (!isAllowedEmail(email)) return sent; // silent no-op
+  if (!isAllowedEmail(email)) {
+    // Silent to the caller, loud in our logs. The user-facing response is
+    // identical either way so the form cannot be used to enumerate staff, but
+    // without this line a rejected address is indistinguishable from a
+    // delivery failure when something goes wrong. Also the audit trail you
+    // want for failed admin sign-in attempts.
+    console.warn(`[requestLoginLink] rejected, not in allowlist: ${email}`);
+    return sent;
+  }
 
   try {
     const supabase = await createSupabaseAuthClient();
@@ -47,6 +55,7 @@ export async function requestLoginLink(
       },
     });
     if (error) throw error;
+    console.info(`[requestLoginLink] magic link requested for ${email}`);
   } catch (err) {
     console.error("[requestLoginLink] failed:", err);
     return {
