@@ -4,7 +4,14 @@ import { redirect } from "next/navigation";
 import { isAllowedEmail, isAdminConfigured } from "@/lib/auth/access";
 import { createSupabaseAuthClient } from "@/lib/supabase/auth-client";
 
-export type LoginState = { status: "idle" | "sent" | "error"; message?: string };
+export type LoginState = {
+  status: "idle" | "sent" | "error";
+  message?: string;
+  /** Carried through so the code step knows which address to verify. */
+  email?: string;
+};
+
+export type VerifyState = { status: "idle" | "error"; message?: string };
 
 /**
  * Magic-link sign in.
@@ -21,7 +28,9 @@ export async function requestLoginLink(
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const sent: LoginState = {
     status: "sent",
-    message: "If that address has access, a sign-in link is on its way. It expires in an hour.",
+    email,
+    message:
+      "If that address has access, a six-digit code is on its way. It expires in an hour.",
   };
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
@@ -71,4 +80,47 @@ export async function signOut() {
   const supabase = await createSupabaseAuthClient();
   await supabase.auth.signOut();
   redirect("/admin/login");
+}
+
+
+/**
+ * Step two: verify the emailed six-digit code.
+ *
+ * Preferred over clicking the magic link. A code cannot be consumed by a
+ * corporate email scanner pre-fetching URLs, and it does not depend on the
+ * Supabase redirect allowlist or on the link being opened in the same browser
+ * that requested it.
+ */
+export async function verifyLoginCode(
+  _prev: VerifyState,
+  formData: FormData,
+): Promise<VerifyState> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const token = String(formData.get("token") ?? "").replace(/\s/g, "");
+
+  if (!/^\d{6}$/.test(token)) {
+    return { status: "error", message: "Enter the six-digit code from your email." };
+  }
+  // Re-check: the address could have been removed since the code was sent.
+  if (!isAllowedEmail(email)) {
+    return { status: "error", message: "That code is not valid." };
+  }
+
+  try {
+    const supabase = await createSupabaseAuthClient();
+    const { data, error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
+    if (error || !data.user) {
+      return { status: "error", message: "That code is not valid or has expired." };
+    }
+    if (!isAllowedEmail(data.user.email)) {
+      await supabase.auth.signOut();
+      return { status: "error", message: "That code is not valid." };
+    }
+  } catch (err) {
+    console.error("[verifyLoginCode] failed:", err);
+    return { status: "error", message: "We could not verify that code. Please try again." };
+  }
+
+  // Outside the try: redirect() signals by throwing, and must not be caught.
+  redirect("/admin");
 }
