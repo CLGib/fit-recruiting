@@ -3,11 +3,21 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import AdminNoteForm from "@/components/admin-note-form";
 import AdminStatusPicker from "@/components/admin-status-picker";
+import AdminResumeBriefing from "@/components/admin-resume-briefing";
 import { Arrow, Container, Section } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth/guard";
-import { getSubmission, listNotes, signedResumeUrl } from "@/lib/admin/submissions";
+import {
+  getAnalysis,
+  getSubmission,
+  listNotes,
+  signedResumeUrl,
+  type StoredAnalysis,
+  type Submission,
+} from "@/lib/admin/submissions";
+import { isAiConfigured } from "@/lib/ai/config";
+import { isAnalyzable } from "@/lib/ai/resume-analysis";
 import { STATUS_LABEL } from "@/lib/admin/status";
-import { isAdminPreview } from "@/lib/admin/preview";
+import { isAdminPreview, PREVIEW_ANALYSIS, PREVIEW_ROWS } from "@/lib/admin/preview";
 
 export const metadata: Metadata = {
   title: "Submission",
@@ -36,26 +46,24 @@ export default async function SubmissionPage({
   await requireAdmin();
   const { id } = await params;
 
-  if (isAdminPreview()) {
-    return (
-      <Section className="pt-12">
-        <Container>
-          <p className="text-body">
-            Submission detail is not available in local preview mode. Sign in to
-            view a real record.
-          </p>
-        </Container>
-      </Section>
-    );
-  }
+  // Local preview renders the same layout against the invented sample rows, so
+  // the design can be reviewed without opening a real candidate's record.
+  const preview = isAdminPreview();
 
-  const submission = await getSubmission(id);
+  const submission = preview
+    ? ((PREVIEW_ROWS.find((r) => r.id === id) ?? null) as Submission | null)
+    : await getSubmission(id);
   if (!submission) notFound();
 
-  const [notes, resumeUrl] = await Promise.all([
-    listNotes(id),
-    signedResumeUrl(submission.resume_path),
-  ]);
+  // Only sample-1 carries a briefing, so the preview shows both the written
+  // state and the "not run yet" state that a recruiter actually meets first.
+  const [notes, resumeUrl, analysis] = preview
+    ? [[], null, id === "sample-1" ? ({ result: PREVIEW_ANALYSIS } as StoredAnalysis) : null]
+    : await Promise.all([
+        listNotes(id),
+        signedResumeUrl(submission.resume_path),
+        getAnalysis(id),
+      ]);
 
   const name = `${submission.first_name} ${submission.last_name}`;
 
@@ -81,7 +89,16 @@ export default async function SubmissionPage({
               {submission.role_slug ? ` for ${submission.role_slug}` : ", general submission"}
             </p>
 
-            <div className="mt-8 rounded-[1.75rem] border border-line-soft bg-canvas-warm/50 p-7">
+            {submission.resume_path && (
+              <AdminResumeBriefing
+                submissionId={submission.id}
+                configured={preview || isAiConfigured()}
+                analyzable={isAnalyzable(submission.resume_filename, submission.resume_path)}
+                stored={analysis}
+              />
+            )}
+
+            <div className="mt-5 rounded-[1.75rem] border border-line-soft bg-canvas-warm/50 p-7">
               <AdminNoteForm submissionId={submission.id} />
             </div>
 
@@ -174,6 +191,7 @@ export default async function SubmissionPage({
                 </p>
               </div>
             )}
+
           </aside>
         </div>
       </Container>

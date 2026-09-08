@@ -59,6 +59,19 @@ export const PREVIEW_ROWS: PreviewRow[] = [
     status: "reviewing",
   },
   {
+    id: "sample-4",
+    created_at: hoursAgo(9),
+    first_name: "Fourth",
+    last_name: "Sample",
+    email: "fourth.sample@example.com",
+    phone: "251.555.0176",
+    role_slug: "inside-sales-representative-spanish-fort-al",
+    message: null,
+    resume_path: "sample-4/resume.pdf",
+    resume_filename: "fourth-sample-resume.pdf",
+    status: "new",
+  },
+  {
     id: "sample-3",
     created_at: hoursAgo(76),
     first_name: "Third",
@@ -73,3 +86,42 @@ export const PREVIEW_ROWS: PreviewRow[] = [
     status: "contacted",
   },
 ];
+
+/**
+ * A sample briefing, so the detail layout can be reviewed without an API key
+ * and without opening a real candidate's résumé. Invented, like the rows above.
+ */
+export const PREVIEW_ANALYSIS = {
+  headline:
+    "A staff accountant with four years in public accounting looking to move in-house on the Gulf Coast.",
+  current_title: "Staff Accountant",
+  years_experience: 4,
+  location: "Mobile, AL",
+  skills: ["QuickBooks", "NetSuite", "Excel", "Month-end close", "1120S and 1065 returns", "Sales tax filings"],
+  employment: [
+    { employer: "Regional CPA firm, Mobile", title: "Staff Accountant", start: "Mar 2022", end: "Present" },
+    { employer: "Regional CPA firm, Mobile", title: "Accounting Associate", start: "Jun 2021", end: "Mar 2022" },
+    { employer: "Gulf Coast retail group", title: "Accounting Intern", start: "Jan 2021", end: "May 2021" },
+  ],
+  education: ["B.S. Accounting, University of South Alabama", "CPA candidate, three sections passed"],
+  strengths: [
+    "Cut month-end close from twelve days to five after rebuilding the reconciliation workbook.",
+    "Carried a book of roughly forty small business clients through two full tax seasons.",
+    "Named as the firm's NetSuite point of contact during its migration.",
+  ],
+  things_to_ask_about: [
+    {
+      observation: "Both listed roles are at the same firm, and the résumé does not say why they are looking to move.",
+      question: "What is drawing you toward an in-house role rather than staying in public accounting?",
+    },
+    {
+      observation: "The résumé says CPA candidate with three sections passed but gives no date for the fourth.",
+      question: "Where are you with the last section, and what timeline are you working toward?",
+    },
+  ],
+  missing_information: [
+    "No salary expectation stated.",
+    "No notice period or availability date.",
+    "No mention of whether they would consider Baldwin County.",
+  ],
+};

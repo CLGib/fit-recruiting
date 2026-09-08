@@ -81,3 +81,34 @@ export async function signedResumeUrl(path: string | null): Promise<string | nul
   const { data } = await supabase.storage.from(RESUME_BUCKET).createSignedUrl(path, 60 * 10);
   return data?.signedUrl ?? null;
 }
+
+export type StoredAnalysis = {
+  id: string;
+  submission_id: string;
+  result: unknown;
+  model: string;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  created_at: string;
+  created_by: string;
+};
+
+export async function getAnalysis(submissionId: string): Promise<StoredAnalysis | null> {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = createSupabaseAdminClient();
+  const { data } = await supabase
+    .from("resume_analyses")
+    .select("*")
+    .eq("submission_id", submissionId)
+    .maybeSingle();
+  return (data as StoredAnalysis) ?? null;
+}
+
+/** Downloads the résumé and returns it base64 encoded, for the model. */
+export async function resumeBase64(path: string | null): Promise<string | null> {
+  if (!path || !isSupabaseConfigured()) return null;
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase.storage.from(RESUME_BUCKET).download(path);
+  if (error || !data) return null;
+  return Buffer.from(await data.arrayBuffer()).toString("base64");
+}
