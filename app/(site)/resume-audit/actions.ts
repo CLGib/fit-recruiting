@@ -20,6 +20,22 @@ export type AuditState = {
 const MAX_BYTES = 4 * 1024 * 1024;
 
 /**
+ * What someone sees when they hit a ceiling.
+ *
+ * Never says "rate limited". A candidate who has read their review three times
+ * is not doing anything wrong, and the useful thing to tell them is that a
+ * person here will read it if they want more.
+ */
+const LIMIT_MESSAGE: Record<"per_ip" | "per_day" | "unavailable", string> = {
+  per_ip:
+    "You have had a few reviews today already. Come back tomorrow, or send your résumé to jobs@fitrecruiting.com and someone here in Mobile will read it properly.",
+  per_day:
+    "The review tool has been busy today and has reached its limit. Try again tomorrow, or send your résumé to jobs@fitrecruiting.com.",
+  unavailable:
+    "The review tool is not available right now. Send your résumé to jobs@fitrecruiting.com and someone here will read it.",
+};
+
+/**
  * Review a résumé for the person who wrote it.
  *
  * Deliberately stores NOTHING. This is a stranger handing over a document with
@@ -54,6 +70,14 @@ export async function auditResume(
       message:
         "The review tool is offline right now. Send your résumé to jobs@fitrecruiting.com and someone here will read it.",
     };
+  }
+
+  // Checked after validation so a rejected file does not burn someone's slot,
+  // and before the model runs so nothing gets read for free.
+  const { claimAuditSlot } = await import("@/lib/ai/audit-limit");
+  const slot = await claimAuditSlot();
+  if (!slot.allowed) {
+    return { status: "error", message: LIMIT_MESSAGE[slot.reason] };
   }
 
   try {
