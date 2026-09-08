@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { analyzeResume, type AnalyzeState } from "@/app/admin/submissions/actions";
+import { analyzeResume, type AnalyzeState } from "@/app/admin/(portal)/submissions/actions";
 
 const INITIAL: AnalyzeState = { status: "idle" };
 

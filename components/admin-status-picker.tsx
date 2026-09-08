@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { setStatus } from "@/app/admin/submissions/actions";
+import { setStatus } from "@/app/admin/(portal)/submissions/actions";
 import { STATUSES, STATUS_LABEL, type Status } from "@/lib/admin/status";
 
 /**

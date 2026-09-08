@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
-import SiteHeader from "@/components/site-header";
-import SiteFooter from "@/components/site-footer";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -79,14 +77,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${cormorant.variable} ${inter.variable}`}>
-      <body className="bg-canvas antialiased">
-        <a href="#main" className="skip-link">
-          Skip to content
-        </a>
-        <SiteHeader />
-        <main id="main">{children}</main>
-        <SiteFooter />
-      </body>
+      {/* Chrome belongs to the route groups: (site) gets the marketing header
+          and footer, /admin gets the portal sidebar. */}
+      <body className="bg-canvas antialiased">{children}</body>
     </html>
   );
 }

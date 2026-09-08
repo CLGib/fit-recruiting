@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useId, useRef } from "react";
 import { useFormStatus } from "react-dom";
-import { addNote, type NoteState } from "@/app/admin/submissions/actions";
+import { addNote, type NoteState } from "@/app/admin/(portal)/submissions/actions";
 
 const INITIAL: NoteState = { status: "idle" };
 

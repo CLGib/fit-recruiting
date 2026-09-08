@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import AdminNoteForm from "@/components/admin-note-form";
 import AdminStatusPicker from "@/components/admin-status-picker";
 import AdminResumeBriefing from "@/components/admin-resume-briefing";
-import { Arrow, Container, Section } from "@/components/ui";
+import { Arrow } from "@/components/ui";
+import { PortalPage } from "@/components/admin/page-header";
 import { requireAdmin } from "@/lib/auth/guard";
 import {
   getAnalysis,
@@ -68,8 +69,7 @@ export default async function SubmissionPage({
   const name = `${submission.first_name} ${submission.last_name}`;
 
   return (
-    <Section className="pt-10 lg:pt-14">
-      <Container>
+    <PortalPage>
         <Link
           href="/admin"
           className="inline-flex items-center gap-2 text-sm font-medium text-body transition-colors hover:text-navy"
@@ -194,7 +194,6 @@ export default async function SubmissionPage({
 
           </aside>
         </div>
-      </Container>
-    </Section>
+    </PortalPage>
   );
 }

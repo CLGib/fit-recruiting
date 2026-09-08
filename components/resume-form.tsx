@@ -2,7 +2,7 @@
 
 import { useActionState, useId, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { submitResume, type SubmitState } from "@/app/submit-resume/actions";
+import { submitResume, type SubmitState } from "@/app/(site)/submit-resume/actions";
 import { Arrow } from "@/components/ui";
 
 const INITIAL: SubmitState = { status: "idle" };
