@@ -125,3 +125,139 @@ export const PREVIEW_ANALYSIS = {
     "No mention of whether they would consider Baldwin County.",
   ],
 };
+
+/**
+ * Sample roles, so the roles screens can be walked through end to end without
+ * a database. Invented, like everything else in this file. The three cover the
+ * states that look different: published everywhere, open but not yet sent to
+ * Bullhorn, and a bare draft with no description written.
+ */
+export const PREVIEW_ROLES = [
+  {
+    id: "role-1",
+    slug: "senior-staff-accountant-mobile-al",
+    title: "Senior Staff Accountant",
+    location: "Mobile, AL",
+    employment_type: "Full Time",
+    categories: ["Accounting & Finance"],
+    salary: "$70,000 to $82,000",
+    intake_notes:
+      "Reports to the controller, team of four. Lost someone to a competitor in June and they are behind on close. Wants someone who has owned a month-end close start to finish. Hybrid, three days in the office.",
+    summary:
+      "A manufacturer on the western side of Mobile is adding a senior accountant to a team of four. You would own month-end close, work directly with the controller, and have real say in how the close gets rebuilt after a stretch of running behind.",
+    responsibilities: [
+      "Own the month-end close and the reconciliations that feed it",
+      "Prepare monthly financial statements and the variance commentary that goes with them",
+      "Work with operations on inventory and cost accounting",
+      "Support the annual audit and the external accountants",
+      "Take a first pass at rebuilding the close calendar",
+    ],
+    requirements: [
+      "Bachelor's degree in accounting",
+      "Four or more years in a full-cycle accounting role",
+      "Has run a month-end close start to finish",
+      "Comfortable in Excel beyond pivot tables",
+    ],
+    status: "open",
+    site_published_at: hoursAgo(50),
+    bullhorn_job_order_id: "18442",
+    bullhorn_synced_at: hoursAgo(49),
+    linkedin_urn: "urn:li:jobPosting:4102938471",
+    linkedin_synced_at: hoursAgo(48),
+    description_model: "claude-opus-5",
+    created_at: hoursAgo(52),
+    updated_at: hoursAgo(48),
+    created_by: "chambliss@fitrecruiting.com",
+  },
+  {
+    id: "role-2",
+    slug: "it-support-specialist-daphne-al",
+    title: "IT Support Specialist",
+    location: "Daphne, AL",
+    employment_type: "Full Time",
+    categories: ["Information Technology"],
+    salary: null,
+    intake_notes:
+      "Small office, about 60 users across two sites. They have never had anyone internal, everything has been outsourced and they are tired of waiting on tickets.",
+    summary:
+      "A professional services firm on the Eastern Shore is hiring its first internal IT person. Right now everything runs through an outside vendor and the team is tired of waiting. You would be the person who fixes things the same day.",
+    responsibilities: [
+      "Handle day to day support for about sixty people across two offices",
+      "Manage laptops, phones, and accounts from setup through retirement",
+      "Take over the relationship with the outside vendor for anything you do not own",
+      "Write down how things work, since none of it is documented today",
+    ],
+    requirements: [
+      "Two or more years supporting end users directly",
+      "Comfortable with Windows, Microsoft 365, and basic networking",
+      "Able to be on site in Daphne",
+    ],
+    status: "open",
+    site_published_at: hoursAgo(20),
+    bullhorn_job_order_id: null,
+    bullhorn_synced_at: null,
+    linkedin_urn: null,
+    linkedin_synced_at: null,
+    description_model: "claude-opus-5",
+    created_at: hoursAgo(22),
+    updated_at: hoursAgo(20),
+    created_by: "chambliss@fitrecruiting.com",
+  },
+  {
+    id: "role-3",
+    slug: "executive-assistant-mobile-al",
+    title: "Executive Assistant",
+    location: "Mobile, AL",
+    employment_type: "Full Time",
+    categories: ["Administrative"],
+    salary: null,
+    intake_notes:
+      "Call with the CEO Friday. Supporting two executives. Heavy calendar and travel. She mentioned discretion several times.",
+    summary: null,
+    responsibilities: [],
+    requirements: [],
+    status: "draft",
+    site_published_at: null,
+    bullhorn_job_order_id: null,
+    bullhorn_synced_at: null,
+    linkedin_urn: null,
+    linkedin_synced_at: null,
+    description_model: null,
+    created_at: hoursAgo(5),
+    updated_at: hoursAgo(5),
+    created_by: "chambliss@fitrecruiting.com",
+  },
+];
+
+/** A sample match run for the preview candidate, against PREVIEW_ROLES. */
+export const PREVIEW_MATCH = {
+  overall:
+    "Strongest against the senior accountant role in Mobile, where the month-end close experience lines up almost exactly. Worth a call this week.",
+  matches: [
+    {
+      role_slug: "senior-staff-accountant-mobile-al",
+      verdict: "worth_a_call",
+      reasons: [
+        "Has run a month-end close start to finish, which is the role's central requirement.",
+        "Cut a close from twelve days to five, so they have done the rebuild this client is asking for.",
+        "Already in Mobile, so the three-day hybrid schedule is not a hurdle.",
+        "Public accounting background matches the client's preference for someone who has seen more than one set of books.",
+      ],
+      gaps: [
+        "No stated experience with inventory or cost accounting, which the role lists.",
+        "CPA is in progress rather than complete.",
+      ],
+      ask: "Have you worked anywhere with inventory on the balance sheet?",
+    },
+    {
+      role_slug: "it-support-specialist-daphne-al",
+      verdict: "not_this_one",
+      reasons: [],
+      gaps: [
+        "No end user support experience on the résumé.",
+        "Background is accounting rather than IT.",
+      ],
+      ask: null,
+    },
+  ],
+};

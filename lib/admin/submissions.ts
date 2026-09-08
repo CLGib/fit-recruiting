@@ -28,6 +28,8 @@ export type Note = {
   author_email: string;
   body: string;
   created_at: string;
+  /** Set once the note has been pushed into Bullhorn. Null until then. */
+  bullhorn_note_id: string | null;
 };
 
 export async function listSubmissions(): Promise<Submission[]> {
@@ -111,4 +113,30 @@ export async function resumeBase64(path: string | null): Promise<string | null> 
   const { data, error } = await supabase.storage.from(RESUME_BUCKET).download(path);
   if (error || !data) return null;
   return Buffer.from(await data.arrayBuffer()).toString("base64");
+}
+
+export type StoredMatch = {
+  id: string;
+  submission_id: string;
+  result: unknown;
+  roles_hash: string;
+  model: string;
+  created_at: string;
+  created_by: string;
+};
+
+export async function getRoleMatch(submissionId: string): Promise<StoredMatch | null> {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = createSupabaseAdminClient();
+  const { data } = await supabase
+    .from("resume_role_matches")
+    .select("*")
+    .eq("submission_id", submissionId)
+    .maybeSingle();
+  return (data as StoredMatch) ?? null;
+}
+
+/** Identifies which roles a match run considered, so staleness is visible. */
+export function rolesHash(slugs: string[]): string {
+  return [...slugs].sort().join(",");
 }

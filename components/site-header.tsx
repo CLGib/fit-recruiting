@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 // names and bios. It is deliberately unlinked while entries are placeholders.
 const NAV = [
   { href: "/jobs", label: "Open Roles" },
+  { href: "/resume-audit", label: "Resume Review" },
   { href: "/resources", label: "Interview Guide" },
   { href: "/employers", label: "For Employers" },
   { href: "/about", label: "About" },
@@ -30,9 +31,6 @@ export default function SiteHeader() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  // Close the mobile drawer whenever the route changes.
-  useEffect(() => setOpen(false), [pathname]);
 
   // Lock body scroll while the drawer is open.
   useEffect(() => {
@@ -131,6 +129,7 @@ export default function SiteHeader() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setOpen(false)}
               className="border-b border-line-soft py-4 font-display text-2xl text-navy"
             >
               {item.label}
@@ -138,6 +137,7 @@ export default function SiteHeader() {
           ))}
           <Link
             href="/submit-resume"
+            onClick={() => setOpen(false)}
             className="mt-6 rounded-full bg-navy px-6 py-4 text-center text-sm font-semibold text-canvas"
           >
             Submit Résumé

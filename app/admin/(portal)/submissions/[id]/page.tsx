@@ -4,21 +4,32 @@ import { notFound } from "next/navigation";
 import AdminNoteForm from "@/components/admin-note-form";
 import AdminStatusPicker from "@/components/admin-status-picker";
 import AdminResumeBriefing from "@/components/admin-resume-briefing";
+import RoleMatchPanel from "@/components/admin/role-match-panel";
 import { Arrow } from "@/components/ui";
 import { PortalPage } from "@/components/admin/page-header";
 import { requireAdmin } from "@/lib/auth/guard";
 import {
   getAnalysis,
+  getRoleMatch,
   getSubmission,
   listNotes,
+  rolesHash,
   signedResumeUrl,
   type StoredAnalysis,
+  type StoredMatch,
   type Submission,
 } from "@/lib/admin/submissions";
 import { isAiConfigured } from "@/lib/ai/config";
 import { isAnalyzable } from "@/lib/ai/resume-analysis";
 import { STATUS_LABEL } from "@/lib/admin/status";
-import { isAdminPreview, PREVIEW_ANALYSIS, PREVIEW_ROWS } from "@/lib/admin/preview";
+import {
+  isAdminPreview,
+  PREVIEW_ANALYSIS,
+  PREVIEW_MATCH,
+  PREVIEW_ROLES,
+  PREVIEW_ROWS,
+} from "@/lib/admin/preview";
+import { listOpenRoles } from "@/lib/admin/roles";
 
 export const metadata: Metadata = {
   title: "Submission",
@@ -58,13 +69,30 @@ export default async function SubmissionPage({
 
   // Only sample-1 carries a briefing, so the preview shows both the written
   // state and the "not run yet" state that a recruiter actually meets first.
-  const [notes, resumeUrl, analysis] = preview
-    ? [[], null, id === "sample-1" ? ({ result: PREVIEW_ANALYSIS } as StoredAnalysis) : null]
+  const [notes, resumeUrl, analysis, match, openRoles] = preview
+    ? ([
+        [],
+        null,
+        id === "sample-1" ? ({ result: PREVIEW_ANALYSIS } as StoredAnalysis) : null,
+        id === "sample-1"
+          ? ({ result: PREVIEW_MATCH, roles_hash: "" } as StoredMatch)
+          : null,
+        PREVIEW_ROLES.filter((r) => r.status === "open"),
+      ] as const)
     : await Promise.all([
         listNotes(id),
         signedResumeUrl(submission.resume_path),
         getAnalysis(id),
+        getRoleMatch(id),
+        listOpenRoles(),
       ]);
+
+  const roleTitles = Object.fromEntries(openRoles.map((r) => [r.slug, r.title]));
+  // A cached match that predates a role change is worth flagging rather than
+  // silently re-running: re-running costs money and is the recruiter's call.
+  const staleMatch = Boolean(
+    match && !preview && match.roles_hash !== rolesHash(openRoles.map((r) => r.slug)),
+  );
 
   const name = `${submission.first_name} ${submission.last_name}`;
 
@@ -88,6 +116,17 @@ export default async function SubmissionPage({
               Applied {when(submission.created_at)}
               {submission.role_slug ? ` for ${submission.role_slug}` : ", general submission"}
             </p>
+
+            {submission.resume_path && (
+              <RoleMatchPanel
+                submissionId={submission.id}
+                configured={preview || isAiConfigured()}
+                analyzable={isAnalyzable(submission.resume_filename, submission.resume_path)}
+                stored={match?.result ?? null}
+                roleTitles={roleTitles}
+                stale={staleMatch}
+              />
+            )}
 
             {submission.resume_path && (
               <AdminResumeBriefing
@@ -118,7 +157,16 @@ export default async function SubmissionPage({
                   >
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
                       <p className="text-sm font-semibold text-navy">{n.author_email}</p>
-                      <p className="text-sm text-body">{when(n.created_at)}</p>
+                      <div className="flex items-baseline gap-3">
+                        {/* Sync state is shown per note rather than per record:
+                            once Bullhorn is connected, some notes will have
+                            gone across and some will not, and the difference
+                            matters when someone is looking at Bullhorn instead. */}
+                        <span className="text-xs text-body">
+                          {n.bullhorn_note_id ? "In Bullhorn" : "Here only"}
+                        </span>
+                        <p className="text-sm text-body">{when(n.created_at)}</p>
+                      </div>
                     </div>
                     <p className="mt-3 whitespace-pre-line leading-relaxed text-body">
                       {n.body}

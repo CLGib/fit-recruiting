@@ -139,3 +139,84 @@ export async function analyzeResume(
   revalidatePath(`/admin/submissions/${submissionId}`);
   return { status: "idle" };
 }
+
+export type MatchState = { status: "idle" | "error"; message?: string };
+
+/**
+ * Read this candidate against every role Fit currently has open.
+ *
+ * On demand and cached, like the briefing. Re-running is how a recruiter picks
+ * up newly added roles, so the screen says when the cached run predates them.
+ */
+export async function matchToRoles(
+  _prev: MatchState,
+  formData: FormData,
+): Promise<MatchState> {
+  const author = await requireAdmin();
+
+  const submissionId = String(formData.get("submissionId") ?? "");
+  if (!submissionId) return { status: "error", message: "Missing submission." };
+  if (!isSupabaseConfigured()) {
+    return { status: "error", message: "Not connected to the database." };
+  }
+  if (!isAiConfigured()) {
+    return { status: "error", message: "No Anthropic API key is set on this deployment." };
+  }
+
+  const { getSubmission, resumeBase64, rolesHash } = await import("@/lib/admin/submissions");
+  const { listOpenRoles } = await import("@/lib/admin/roles");
+  const { isAnalyzable } = await import("@/lib/ai/resume-analysis");
+  const { matchResumeToRoles } = await import("@/lib/ai/role-match");
+
+  const submission = await getSubmission(submissionId);
+  if (!submission) return { status: "error", message: "That submission no longer exists." };
+  if (!isAnalyzable(submission.resume_filename, submission.resume_path)) {
+    return { status: "error", message: "Matching reads PDFs only." };
+  }
+
+  const roles = await listOpenRoles();
+  if (roles.length === 0) {
+    return { status: "error", message: "There are no open roles to match against yet." };
+  }
+
+  try {
+    const pdf = await resumeBase64(submission.resume_path);
+    if (!pdf) throw new Error("Could not read the résumé file from storage.");
+
+    const { match, model, inputTokens, outputTokens } = await matchResumeToRoles(
+      pdf,
+      roles.map((r) => ({
+        slug: r.slug,
+        title: r.title,
+        location: r.location,
+        summary: r.summary,
+        requirements: r.requirements,
+      })),
+    );
+
+    const supabase = createSupabaseAdminClient();
+    const { error } = await supabase.from("resume_role_matches").upsert(
+      {
+        submission_id: submissionId,
+        result: match,
+        roles_hash: rolesHash(roles.map((r) => r.slug)),
+        model,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        created_by: author,
+        created_at: new Date().toISOString(),
+      },
+      { onConflict: "submission_id" },
+    );
+    if (error) throw error;
+  } catch (err) {
+    console.error("[matchToRoles] failed:", err);
+    return {
+      status: "error",
+      message: "The match could not be run. Open the résumé and the roles directly, and try again later.",
+    };
+  }
+
+  revalidatePath(`/admin/submissions/${submissionId}`);
+  return { status: "idle" };
+}

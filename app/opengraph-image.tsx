@@ -87,7 +87,6 @@ export default async function Image() {
       >
         {/* Reversed lockup, per the brand rule for dark surfaces. */}
         <div style={{ display: "flex" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={logoDataUri()} alt="" height={104} />
         </div>
 

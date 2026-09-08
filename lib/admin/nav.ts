@@ -45,7 +45,7 @@ export const PORTAL_NAV: NavSection[] = [
     items: [
       {
         href: "/admin/roles",
-        label: "Open roles",
+        label: "Roles",
         keywords: [
           "job posting",
           "post a job",
