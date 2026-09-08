@@ -1,0 +1,83 @@
+import "server-only";
+
+import { RESUME_BUCKET, isSupabaseConfigured } from "@/lib/supabase/config";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import type { Status } from "./status";
+
+// Stage constants live in ./status so client components can import them
+// without pulling this server-only module into the browser bundle.
+export type { Status } from "./status";
+
+export type Submission = {
+  id: string;
+  created_at: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string | null;
+  role_slug: string | null;
+  message: string | null;
+  resume_path: string | null;
+  resume_filename: string | null;
+  status: Status;
+};
+
+export type Note = {
+  id: string;
+  submission_id: string;
+  author_email: string;
+  body: string;
+  created_at: string;
+};
+
+export async function listSubmissions(): Promise<Submission[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = createSupabaseAdminClient();
+  const { data } = await supabase
+    .from("candidate_submissions")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  return (data ?? []) as Submission[];
+}
+
+export async function getSubmission(id: string): Promise<Submission | null> {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = createSupabaseAdminClient();
+  const { data } = await supabase
+    .from("candidate_submissions")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  return (data as Submission) ?? null;
+}
+
+export async function listNotes(submissionId: string): Promise<Note[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = createSupabaseAdminClient();
+  const { data } = await supabase
+    .from("candidate_notes")
+    .select("*")
+    .eq("submission_id", submissionId)
+    .order("created_at", { ascending: false });
+  return (data ?? []) as Note[];
+}
+
+/** Counts per status, for the list filter. */
+export async function countsByStatus(rows: Submission[]): Promise<Record<string, number>> {
+  return rows.reduce<Record<string, number>>((acc, r) => {
+    acc[r.status] = (acc[r.status] ?? 0) + 1;
+    return acc;
+  }, {});
+}
+
+/**
+ * Short-lived signed URL for a résumé. Regenerated per request so a link that
+ * leaves the building expires rather than becoming a permanent public copy.
+ */
+export async function signedResumeUrl(path: string | null): Promise<string | null> {
+  if (!path || !isSupabaseConfigured()) return null;
+  const supabase = createSupabaseAdminClient();
+  const { data } = await supabase.storage.from(RESUME_BUCKET).createSignedUrl(path, 60 * 10);
+  return data?.signedUrl ?? null;
+}

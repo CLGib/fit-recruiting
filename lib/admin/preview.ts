@@ -56,7 +56,7 @@ export const PREVIEW_ROWS: PreviewRow[] = [
     message: null,
     resume_path: "sample-2/resume.docx",
     resume_filename: "second-example-resume.docx",
-    status: "reviewed",
+    status: "reviewing",
   },
   {
     id: "sample-3",
