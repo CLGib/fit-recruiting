@@ -140,3 +140,25 @@ export async function getRoleMatch(submissionId: string): Promise<StoredMatch | 
 export function rolesHash(slugs: string[]): string {
   return [...slugs].sort().join(",");
 }
+
+export type StoredPresentation = {
+  id: string;
+  submission_id: string;
+  content: unknown;
+  model: string;
+  created_at: string;
+  created_by: string;
+};
+
+export async function getPresentation(
+  submissionId: string,
+): Promise<StoredPresentation | null> {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = createSupabaseAdminClient();
+  const { data } = await supabase
+    .from("presentation_resumes")
+    .select("*")
+    .eq("submission_id", submissionId)
+    .maybeSingle();
+  return (data as StoredPresentation) ?? null;
+}

@@ -220,3 +220,71 @@ export async function matchToRoles(
   revalidatePath(`/admin/submissions/${submissionId}`);
   return { status: "idle" };
 }
+
+export type PresentationState = { status: "idle" | "error"; message?: string };
+
+/**
+ * Restructure a candidate's résumé onto Fit's template, ready to send to a
+ * hiring manager.
+ *
+ * Stores the extraction rather than the PDF. The PDF is cheap to render and
+ * the recruiter chooses at download time whether contact details are included,
+ * so keeping a rendered file would mean keeping two of them and picking the
+ * wrong one eventually.
+ */
+export async function prepareForClient(
+  _prev: PresentationState,
+  formData: FormData,
+): Promise<PresentationState> {
+  const author = await requireAdmin();
+
+  const submissionId = String(formData.get("submissionId") ?? "");
+  if (!submissionId) return { status: "error", message: "Missing submission." };
+  if (!isSupabaseConfigured()) {
+    return { status: "error", message: "Not connected to the database." };
+  }
+  if (!isAiConfigured()) {
+    return { status: "error", message: "No Anthropic API key is set on this deployment." };
+  }
+
+  const { getSubmission, resumeBase64 } = await import("@/lib/admin/submissions");
+  const { isAnalyzable } = await import("@/lib/ai/resume-analysis");
+  const { buildPresentationResume } = await import("@/lib/ai/resume-presentation");
+
+  const submission = await getSubmission(submissionId);
+  if (!submission) return { status: "error", message: "That submission no longer exists." };
+  if (!isAnalyzable(submission.resume_filename, submission.resume_path)) {
+    return { status: "error", message: "This reads PDFs only." };
+  }
+
+  try {
+    const pdf = await resumeBase64(submission.resume_path);
+    if (!pdf) throw new Error("Could not read the résumé file from storage.");
+
+    const { content, model, inputTokens, outputTokens } = await buildPresentationResume(pdf);
+
+    const supabase = createSupabaseAdminClient();
+    const { error } = await supabase.from("presentation_resumes").upsert(
+      {
+        submission_id: submissionId,
+        content,
+        model,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        created_by: author,
+        created_at: new Date().toISOString(),
+      },
+      { onConflict: "submission_id" },
+    );
+    if (error) throw error;
+  } catch (err) {
+    console.error("[prepareForClient] failed:", err);
+    return {
+      status: "error",
+      message: "The clean copy could not be prepared. Please try again, or send the original.",
+    };
+  }
+
+  revalidatePath(`/admin/submissions/${submissionId}`);
+  return { status: "idle" };
+}

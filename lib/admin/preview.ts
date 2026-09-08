@@ -261,3 +261,75 @@ export const PREVIEW_MATCH = {
     },
   ],
 };
+
+/**
+ * The sample candidate's résumé, set out for a client. Invented, and shaped so
+ * the preview shows the recruiter-notes block that appears when the source
+ * document was ambiguous.
+ */
+export const PREVIEW_PRESENTATION = {
+  full_name: "Sample Candidate",
+  headline: "Staff Accountant",
+  location: "Mobile, AL",
+  email: "sample.candidate@example.com",
+  phone: "251.555.0142",
+  links: ["linkedin.com/in/samplecandidate"],
+  summary:
+    "Staff accountant with four years in public accounting, currently carrying a book of about forty small business clients through tax season and owning the month-end close for the firm's largest engagements.",
+  experience: [
+    {
+      employer: "Regional CPA firm",
+      title: "Staff Accountant",
+      location: "Mobile, AL",
+      start: "Mar 2022",
+      end: "Present",
+      bullets: [
+        "Own the month-end close for the firm's five largest engagements",
+        "Rebuilt the reconciliation workbook, cutting close from twelve days to five",
+        "Prepare 1120S and 1065 returns for approximately forty small business clients",
+        "Serve as the firm's point of contact for its NetSuite migration",
+      ],
+    },
+    {
+      employer: "Regional CPA firm",
+      title: "Accounting Associate",
+      location: "Mobile, AL",
+      start: "Jun 2021",
+      end: "Mar 2022",
+      bullets: [
+        "Prepared monthly bank and credit card reconciliations across a mixed client book",
+        "Filed monthly and quarterly sales tax returns for clients in three states",
+      ],
+    },
+    {
+      employer: "Gulf Coast retail group",
+      title: "Accounting Intern",
+      location: "Mobile, AL",
+      start: "Jan 2021",
+      end: "May 2021",
+      bullets: ["Supported the accounts payable team through two month-end closes"],
+    },
+  ],
+  education: [
+    {
+      institution: "University of South Alabama",
+      credential: "B.S. Accounting",
+      detail: null,
+      year: "2021",
+    },
+  ],
+  skills: [
+    "QuickBooks",
+    "NetSuite",
+    "Excel",
+    "Month-end close",
+    "1120S and 1065 returns",
+    "Sales tax filings",
+  ],
+  certifications: ["CPA candidate, three sections passed"],
+  additional: [],
+  notes_for_recruiter: [
+    "The résumé gives no date for the remaining CPA section. Transcribed as written.",
+    "Both listed roles are at the same employer, named only as a regional CPA firm. The firm is not identified anywhere in the document.",
+  ],
+};

@@ -5,11 +5,13 @@ import AdminNoteForm from "@/components/admin-note-form";
 import AdminStatusPicker from "@/components/admin-status-picker";
 import AdminResumeBriefing from "@/components/admin-resume-briefing";
 import RoleMatchPanel from "@/components/admin/role-match-panel";
+import ClientCopyPanel from "@/components/admin/client-copy-panel";
 import { Arrow } from "@/components/ui";
 import { PortalPage } from "@/components/admin/page-header";
 import { requireAdmin } from "@/lib/auth/guard";
 import {
   getAnalysis,
+  getPresentation,
   getRoleMatch,
   getSubmission,
   listNotes,
@@ -17,6 +19,7 @@ import {
   signedResumeUrl,
   type StoredAnalysis,
   type StoredMatch,
+  type StoredPresentation,
   type Submission,
 } from "@/lib/admin/submissions";
 import { isAiConfigured } from "@/lib/ai/config";
@@ -26,6 +29,7 @@ import {
   isAdminPreview,
   PREVIEW_ANALYSIS,
   PREVIEW_MATCH,
+  PREVIEW_PRESENTATION,
   PREVIEW_ROLES,
   PREVIEW_ROWS,
 } from "@/lib/admin/preview";
@@ -69,7 +73,7 @@ export default async function SubmissionPage({
 
   // Only sample-1 carries a briefing, so the preview shows both the written
   // state and the "not run yet" state that a recruiter actually meets first.
-  const [notes, resumeUrl, analysis, match, openRoles] = preview
+  const [notes, resumeUrl, analysis, match, openRoles, presentation] = preview
     ? ([
         [],
         null,
@@ -78,6 +82,9 @@ export default async function SubmissionPage({
           ? ({ result: PREVIEW_MATCH, roles_hash: "" } as StoredMatch)
           : null,
         PREVIEW_ROLES.filter((r) => r.status === "open"),
+        id === "sample-1"
+          ? ({ content: PREVIEW_PRESENTATION } as StoredPresentation)
+          : null,
       ] as const)
     : await Promise.all([
         listNotes(id),
@@ -85,6 +92,7 @@ export default async function SubmissionPage({
         getAnalysis(id),
         getRoleMatch(id),
         listOpenRoles(),
+        getPresentation(id),
       ]);
 
   const roleTitles = Object.fromEntries(openRoles.map((r) => [r.slug, r.title]));
@@ -125,6 +133,15 @@ export default async function SubmissionPage({
                 stored={match?.result ?? null}
                 roleTitles={roleTitles}
                 stale={staleMatch}
+              />
+            )}
+
+            {submission.resume_path && (
+              <ClientCopyPanel
+                submissionId={submission.id}
+                configured={preview || isAiConfigured()}
+                analyzable={isAnalyzable(submission.resume_filename, submission.resume_path)}
+                stored={presentation?.content ?? null}
               />
             )}
 
