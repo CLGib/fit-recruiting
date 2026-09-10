@@ -14,6 +14,7 @@ const COLUMNS = [
   {
     heading: "Candidates",
     links: [
+      { href: "/for-candidates", label: "For Candidates" },
       { href: "/jobs", label: "Browse Open Roles" },
       { href: "/submit-resume", label: "Submit a Resume" },
       { href: "/resume-audit", label: "Free Resume Review" },

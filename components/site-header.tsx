@@ -5,19 +5,38 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-// Open Roles leads deliberately. Clients mostly call; job seekers come to the
-// website to see what is open, so candidate paths get first position.
+// Four items, on the client's instruction (2026-09-10): candidates had several
+// plausible places to click before finding the one they wanted, so Open Roles,
+// Submit a Résumé, the résumé review and the interview guide now sit behind a
+// single For Candidates door. Those pages all still exist and are linked from
+// there, and the header keeps a direct Submit Résumé button.
 //
 // TODO: add { href: "/team", label: "Meet the Team" } once lib/team.ts has real
 // names and bios. It is deliberately unlinked while entries are placeholders.
 const NAV = [
-  { href: "/jobs", label: "Open Roles" },
-  { href: "/resume-audit", label: "Resume Review" },
-  { href: "/resources", label: "Interview Guide" },
+  { href: "/for-candidates", label: "For Candidates" },
   { href: "/employers", label: "For Employers" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
+
+/**
+ * Pages that live behind the For Candidates door.
+ *
+ * They keep their own URLs, so without this the nav shows nothing highlighted
+ * once someone is on /jobs and they lose track of where they are.
+ */
+const CANDIDATE_ROUTES = ["/jobs", "/submit-resume", "/resume-audit", "/resources"];
+
+function isActive(pathname: string, href: string): boolean {
+  if (href === "/for-candidates") {
+    return (
+      pathname === href ||
+      CANDIDATE_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`))
+    );
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export default function SiteHeader() {
   const pathname = usePathname();
@@ -79,7 +98,7 @@ export default function SiteHeader() {
 
         <nav aria-label="Primary" className="hidden items-center gap-9 lg:flex">
           {NAV.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const active = isActive(pathname, item.href);
             return (
               <Link
                 key={item.href}

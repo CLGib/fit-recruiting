@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Arrow, Container, Section, SectionHeading } from "@/components/ui";
+import { Container, Section, SectionHeading } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Interview Guide",
@@ -246,22 +246,19 @@ export default function ResourcesPage() {
         <Container>
           <Panel title="Closing and following up" items={CLOSING} />
 
-          <div className="mt-14 rounded-[2.5rem] bg-gold px-8 py-14 text-center lg:px-16">
-            <h2 className="mx-auto max-w-2xl font-display text-[clamp(2rem,4vw,3rem)] font-light leading-tight text-ink">
-              Ready when you are.
-            </h2>
-            <p className="mx-auto mt-4 max-w-lg text-ink/75">
-              Send us your résumé and we&rsquo;ll help you find the seat that
-              actually fits.
-            </p>
+          {/* The guide ends with one line and a link, not another full
+              section. Once someone has the information they came for, a large
+              closing panel is just page filler. */}
+          <p className="mt-12 leading-relaxed text-body">
+            When you are ready,{" "}
             <a
               href="/submit-resume"
-              className="mt-9 inline-flex items-center gap-2 rounded-full bg-navy px-7 py-3.5 text-sm font-semibold text-canvas transition-all hover:bg-navy-700"
+              className="font-semibold text-navy underline underline-offset-4 transition-colors hover:text-gold-deep"
             >
-              Submit your résumé
-              <Arrow />
+              send us your résumé
             </a>
-          </div>
+            .
+          </p>
         </Container>
       </Section>
     </>

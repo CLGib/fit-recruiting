@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import DisciplineIcon from "@/components/discipline-icon";
 import { Button, Container, Section, SectionHeading } from "@/components/ui";
-import { PROCESS, SPECIALTIES, STAFFING_MODELS } from "@/lib/content";
+import { SPECIALTIES } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "About",
@@ -39,30 +39,19 @@ export default function AboutPage() {
         </Container>
       </Section>
 
-      {/* --- Photo band --- */}
+      {/* One photo, not a band. Staff portraits live on the team page so
+          headshots stay in one place. */}
       <Section className="pb-0">
         <Container>
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div className="overflow-hidden rounded-[2.5rem]">
-              <Image
-                src="/photos/team-02.jpg"
-                alt="The owner of Fit Recruiting at the firm's Mobile office"
-                width={1200}
-                height={1500}
-                sizes="(max-width: 640px) 100vw, 50vw"
-                className="aspect-[4/5] w-full object-cover"
-              />
-            </div>
-            <div className="overflow-hidden rounded-[2.5rem]">
-              <Image
-                src="/photos/team-03.jpg"
-                alt="A Fit Recruiting recruiter at her desk in the Mobile office"
-                width={1200}
-                height={1500}
-                sizes="(max-width: 640px) 100vw, 50vw"
-                className="aspect-[4/5] w-full object-cover"
-              />
-            </div>
+          <div className="overflow-hidden rounded-[2.5rem]">
+            <Image
+              src="/photos/team-02.jpg"
+              alt="The owner of Fit Recruiting at the firm's Mobile office"
+              width={2000}
+              height={1125}
+              sizes="(max-width: 1240px) 100vw, 1180px"
+              className="aspect-[16/9] w-full object-cover"
+            />
           </div>
         </Container>
       </Section>
@@ -71,14 +60,8 @@ export default function AboutPage() {
       <Section>
         <Container>
           <SectionHeading
-            eyebrow="Local. Trusted. Connected."
-            title={
-              <>
-                We actually work
-                <br />
-                <em className="italic text-gold-deep">where you work.</em>
-              </>
-            }
+            eyebrow="Why Fit"
+            title="Where we work."
             body="We are not calling from three states away. We know these companies, these neighborhoods, and what a commute across the bay really costs you."
           />
           <div className="mt-14 grid gap-5 lg:grid-cols-3">
@@ -124,86 +107,21 @@ export default function AboutPage() {
         </Container>
       </Section>
 
-      {/* --- Staffing models. Direct hire leads; it is the bulk of the work. --- */}
-      <Section className="on-navy bg-navy">
+      {/* One CTA, then the page ends. How Fit engages and how Fit works used
+          to be repeated here; both live on /employers now. */}
+      <Section className="pt-0">
         <Container>
-          <SectionHeading
-            tone="dark"
-            eyebrow="How we engage"
-            title={
-              <>
-                Mostly direct hire,
-                <br />
-                <em className="italic text-gold">with room to flex.</em>
-              </>
-            }
-          />
-          <div className="mt-14 grid gap-5 lg:grid-cols-3">
-            {STAFFING_MODELS.map((m) => (
-              <div
-                key={m.title}
-                className={`rounded-3xl p-9 ${
-                  m.primary
-                    ? "bg-gold text-ink lg:row-span-1"
-                    : "border border-white/10 bg-white/[0.04]"
-                }`}
-              >
-                <h3
-                  className={`font-display text-2xl font-normal ${
-                    m.primary ? "text-ink" : "text-canvas"
-                  }`}
-                >
-                  {m.title}
-                </h3>
-                <p
-                  className={`mt-4 leading-relaxed ${
-                    m.primary ? "text-ink/80" : "text-navy-100"
-                  }`}
-                >
-                  {m.body}
-                </p>
-              </div>
-            ))}
-          </div>
-        </Container>
-      </Section>
-
-      {/* --- Process --- */}
-      <Section>
-        <Container>
-          <SectionHeading
-            eyebrow="How we work"
-            title={
-              <>
-                A process built on
-                <br />
-                <em className="italic text-gold-deep">relationships.</em>
-              </>
-            }
-          />
-          <ol className="mt-14 grid gap-5 sm:grid-cols-2">
-            {PROCESS.map((p) => (
-              <li
-                key={p.step}
-                className="rounded-3xl border border-line-soft bg-canvas-warm/50 p-9"
-              >
-                <span className="font-display text-4xl font-light text-navy-700">{p.step}</span>
-                <h3 className="mt-3 font-display text-2xl font-normal text-navy">{p.title}</h3>
-                <p className="mt-3 leading-relaxed text-body">{p.body}</p>
-              </li>
-            ))}
-          </ol>
-
-          <div className="mt-14 flex flex-col gap-3 sm:flex-row sm:gap-4">
-            <Button href="/jobs" className="w-full sm:w-auto">
-              See open roles
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+            <Button href="/for-candidates" className="w-full sm:w-auto">
+              I am looking for a job
             </Button>
             <Button href="/employers" variant="outline" className="w-full sm:w-auto">
-              Hire with Fit
+              I am hiring
             </Button>
           </div>
         </Container>
       </Section>
+
     </>
   );
 }

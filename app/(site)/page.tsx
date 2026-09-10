@@ -1,26 +1,26 @@
 import Image from "next/image";
 import Link from "next/link";
-import DisciplineIcon from "@/components/discipline-icon";
-import BrandStamp from "@/components/brand-stamp";
-import { Button, Container, Section, SectionHeading, Arrow } from "@/components/ui";
-import {
-  CANDIDATE_POINTS,
-  CANDIDATE_PROMISE,
-  PROCESS,
-  SPECIALTIES,
-} from "@/lib/content";
+import { Button, Container, Section, Arrow } from "@/components/ui";
+import { BRAND_STAMP } from "@/lib/content";
 import { listActiveJobs } from "@/lib/jobs/source";
 
 export const revalidate = 300;
 
+/**
+ * The homepage.
+ *
+ * Cut back hard on the client's instruction (2026-09-10). It previously tried
+ * to introduce the firm, sell candidates, list specialties, explain the
+ * employer process and close twice, which meant a lot of scrolling and eight
+ * separate taglines. It now does three things: says who Fit is, shows what is
+ * open, and says what makes them different. Selling candidates happens on
+ * /for-candidates and the process lives on /employers, each said once.
+ */
 export default async function HomePage() {
   const jobs = await listActiveJobs();
 
   return (
     <>
-      {/* ================================================================== */}
-      {/*  HERO                                                              */}
-      {/* ================================================================== */}
       <section className="grain relative overflow-hidden pt-2 pb-16 sm:pt-8 lg:pt-14 lg:pb-24">
         <Container>
           <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20">
@@ -34,15 +34,15 @@ export default async function HomePage() {
               <p className="mt-7 max-w-lg text-lg leading-relaxed text-body">
                 A boutique recruiting firm placing accounting, IT, administrative,
                 and executive talent across Mobile, Baldwin County, and the Gulf
-                Coast. Real relationships, and a team that actually knows this
-                market.
+                Coast. We have met these employers and walked into their offices,
+                which is why our shortlists are short.
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-                <Button href="/jobs" className="w-full sm:w-auto">
-                  See open roles
+                <Button href="/for-candidates" className="w-full sm:w-auto">
+                  I am looking for a job
                 </Button>
-                <Button href="/submit-resume" variant="outline" className="w-full sm:w-auto">
-                  Submit your résumé
+                <Button href="/employers" variant="outline" className="w-full sm:w-auto">
+                  I am hiring
                 </Button>
               </div>
             </div>
@@ -58,47 +58,18 @@ export default async function HomePage() {
                   className="object-cover"
                 />
               </div>
-
-              {/* Candidate message sits high on the page, per client review. */}
-              <div className="mt-4 rounded-3xl bg-navy p-7 shadow-lift sm:absolute sm:-bottom-8 sm:-left-6 sm:mt-0 sm:w-[19rem] lg:-left-10">
-                <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-gold">
-                  For job seekers
-                </p>
-                <p className="mt-3 font-display text-[1.75rem] font-light leading-tight text-canvas">
-                  {CANDIDATE_PROMISE.hook}
-                </p>
-                <p className="mt-2 text-[0.9375rem] leading-relaxed text-navy-100">
-                  {CANDIDATE_PROMISE.line}
-                </p>
-                <Link
-                  href="/jobs"
-                  className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-gold transition-colors hover:text-gold-soft"
-                >
-                  Browse openings
-                  <Arrow />
-                </Link>
-              </div>
             </div>
           </div>
         </Container>
       </section>
 
-      {/* ================================================================== */}
-      {/*  OPEN ROLES — deliberately the first thing after the hero          */}
-      {/* ================================================================== */}
-      <Section className="pt-20 lg:pt-28" id="jobs">
+      {/* Open roles lead, because this is what job seekers came for. */}
+      <Section className="pt-16 lg:pt-24" id="jobs">
         <Container>
-          <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
-            <SectionHeading
-              eyebrow="Open right now"
-              title={
-                <>
-                  Positions we are
-                  <br />
-                  <em className="italic text-gold-deep">filling this week.</em>
-                </>
-              }
-            />
+          <div className="flex flex-wrap items-baseline justify-between gap-4">
+            <h2 className="font-display text-[clamp(2rem,4.5vw,3rem)] font-light leading-tight tracking-tight text-navy">
+              Open this week
+            </h2>
             <Link
               href="/jobs"
               className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-navy transition-colors hover:text-gold-deep"
@@ -108,8 +79,8 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <ul className="mt-12 grid gap-4 sm:grid-cols-2">
-            {jobs.map((job) => (
+          <ul className="mt-10 grid gap-4 sm:grid-cols-2">
+            {jobs.slice(0, 6).map((job) => (
               <li key={job.slug}>
                 <Link
                   href={`/jobs/${job.slug}`}
@@ -134,212 +105,74 @@ export default async function HomePage() {
             ))}
           </ul>
 
-          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:gap-4">
-            <Button href="/jobs" className="w-full sm:w-auto">
-              Search all openings
-            </Button>
-            <Button href="/submit-resume" variant="outline" className="w-full sm:w-auto">
+          <div className="mt-10">
+            <Button href="/submit-resume" variant="outline">
               Not seeing it? Send your résumé
             </Button>
           </div>
         </Container>
       </Section>
 
-      {/* ================================================================== */}
-      {/*  BRAND STAMP                                                       */}
-      {/* ================================================================== */}
-      <BrandStamp />
-
-      {/* ================================================================== */}
-      {/*  WHY FIT, FOR CANDIDATES                                           */}
-      {/* ================================================================== */}
-      <Section>
+      {/* Local. Trusted. Connected. — the one piece of positioning on the page. */}
+      <Section className="on-navy bg-navy">
         <Container>
-          <div className="grid gap-14 lg:grid-cols-[1fr_1.15fr] lg:gap-20">
-            <div className="lg:sticky lg:top-32 lg:self-start">
-              <SectionHeading
-                eyebrow="For job seekers"
-                title={
-                  <>
-                    Free to you.
-                    <br />
-                    <em className="italic text-gold-deep">Always has been.</em>
-                  </>
-                }
-                body="Companies pay our fees, which means we can spend our time helping you find something that actually fits."
-              />
-              <div className="mt-9">
-                <Button href="/submit-resume">Submit your résumé</Button>
-              </div>
-            </div>
-
-            <ul className="grid gap-4 sm:grid-cols-2">
-              {CANDIDATE_POINTS.map((p) => (
-                <li
-                  key={p.title}
-                  className="rounded-3xl border border-line-soft bg-canvas-warm/50 p-7"
-                >
-                  <h3 className="font-display text-xl font-normal leading-snug text-navy">
-                    {p.title}
-                  </h3>
-                  <p className="mt-3 text-[0.9375rem] leading-relaxed text-body">{p.body}</p>
-                </li>
+          <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
+            <h2 className="font-display text-[clamp(2.25rem,5vw,3.5rem)] font-light leading-[1.06] tracking-tight text-canvas lg:sticky lg:top-32 lg:self-start">
+              {BRAND_STAMP.map((word) => (
+                <span key={word} className="block">
+                  {word}
+                </span>
               ))}
-            </ul>
-          </div>
-        </Container>
-      </Section>
+            </h2>
 
-      {/* ================================================================== */}
-      {/*  SPECIALTIES                                                       */}
-      {/* ================================================================== */}
-      <Section className="pt-0" id="specialties">
-        <Container>
-          <SectionHeading
-            eyebrow="What we place"
-            title={
-              <>
-                Four areas we know
-                <br />
-                <em className="italic text-gold-deep">inside and out.</em>
-              </>
-            }
-            body="We do not try to fill everything. We stay in the lanes the Gulf Coast actually hires for, which is why our shortlists are short."
-          />
-
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {SPECIALTIES.map((s) => (
-              <div
-                key={s.title}
-                className="group rounded-3xl border border-line-soft bg-canvas-warm/60 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-line hover:bg-canvas-warm hover:shadow-soft"
-              >
-                <div className="mb-7 text-navy-700 transition-colors group-hover:text-gold-deep">
-                  <DisciplineIcon title={s.title} />
-                </div>
-                <h3 className="font-display text-2xl font-normal leading-snug text-navy">
-                  {s.title}
-                </h3>
-                <p className="mt-3 text-[0.9375rem] leading-relaxed text-body">{s.body}</p>
+            <dl className="grid gap-8 sm:grid-cols-2">
+              <div>
+                <dt className="font-display text-2xl font-normal text-gold">Local</dt>
+                <dd className="mt-3 leading-relaxed text-navy-100">
+                  We live here. Every placement we make is on the Gulf Coast, and
+                  we know which companies people stay at.
+                </dd>
               </div>
-            ))}
-          </div>
-        </Container>
-      </Section>
-
-      {/* ================================================================== */}
-      {/*  PROCESS                                                           */}
-      {/* ================================================================== */}
-      <Section className="on-navy bg-navy" id="process">
-        <Container>
-          <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
-            <div className="lg:sticky lg:top-32 lg:self-start">
-              <SectionHeading
-                tone="dark"
-                eyebrow="For employers"
-                title={
-                  <>
-                    A process built on
-                    <br />
-                    <em className="italic text-gold">relationships.</em>
-                  </>
-                }
-                body="We do not blast résumés. We sit down with you, learn your culture, and bring back people who already feel like part of the team."
-              />
-              <div className="mt-9 overflow-hidden rounded-[2rem]">
-                <Image
-                  src="/photos/team-01.jpg"
-                  alt="A Fit Recruiting recruiter at the firm's Mobile office"
-                  width={1200}
-                  height={900}
-                  sizes="(max-width: 1024px) 100vw, 42vw"
-                  className="aspect-[4/3] w-full object-cover"
-                />
+              <div>
+                <dt className="font-display text-2xl font-normal text-gold">Trusted</dt>
+                <dd className="mt-3 leading-relaxed text-navy-100">
+                  Reference checks, background checks, skills testing. We would
+                  rather tell a client a role is hard to fill than send filler.
+                </dd>
               </div>
-            </div>
-
-            <ol className="space-y-3">
-              {PROCESS.map((p) => (
-                <li
-                  key={p.step}
-                  className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 lg:p-9"
-                >
-                  <div className="flex items-baseline gap-5">
-                    <span className="font-display text-4xl font-light text-gold">{p.step}</span>
-                    <h3 className="font-display text-[1.75rem] font-normal leading-tight text-canvas">
-                      {p.title}
-                    </h3>
-                  </div>
-                  <p className="mt-4 leading-relaxed text-navy-100">{p.body}</p>
-                </li>
-              ))}
-            </ol>
+              <div>
+                <dt className="font-display text-2xl font-normal text-gold">Connected</dt>
+                <dd className="mt-3 leading-relaxed text-navy-100">
+                  A good portion of what we fill never reaches a job board.
+                  Knowing us is how people hear about those roles.
+                </dd>
+              </div>
+              <div>
+                <dt className="font-display text-2xl font-normal text-gold">Free to you</dt>
+                <dd className="mt-3 leading-relaxed text-navy-100">
+                  If you are looking for work, our fees are paid by the companies
+                  hiring. You are never charged.
+                </dd>
+              </div>
+            </dl>
           </div>
         </Container>
       </Section>
 
-      {/* ================================================================== */}
-      {/*  PULL QUOTE                                                        */}
-      {/* ================================================================== */}
-      <Section>
-        <Container>
-          <figure className="grain relative overflow-hidden rounded-[2.75rem] bg-canvas-deep px-8 py-16 text-center lg:px-20 lg:py-24">
-            <span aria-hidden="true" className="font-display text-7xl leading-none text-gold">
-              &ldquo;
-            </span>
-            <blockquote className="mx-auto mt-4 max-w-3xl font-display text-[clamp(1.75rem,3.4vw,2.75rem)] font-light leading-[1.25] text-navy">
-              We&rsquo;re picky on purpose. It saves everyone time, and it&rsquo;s
-              why the people we send <em className="italic text-gold-deep">tend to stay.</em>
-            </blockquote>
-            <figcaption className="mt-10 text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-navy-700">
-              The Fit Recruiting Team · Mobile, Alabama
-            </figcaption>
-          </figure>
-        </Container>
-      </Section>
-
-      {/* ================================================================== */}
-      {/*  CTA                                                               */}
-      {/* ================================================================== */}
       <Section className="pt-0">
         <Container>
-          <div className="grid items-center gap-12 rounded-[2.75rem] bg-navy p-10 on-navy lg:grid-cols-[1.1fr_0.9fr] lg:p-16">
+          <div className="grain flex flex-col items-start gap-6 rounded-[2.75rem] bg-canvas-deep px-8 py-14 sm:flex-row sm:items-center sm:justify-between lg:px-14">
             <div>
-              <SectionHeading
-                tone="dark"
-                eyebrow="Let's talk"
-                title={
-                  <>
-                    Hiring, or looking?
-                    <br />
-                    <em className="italic text-gold">Let&rsquo;s sit down.</em>
-                  </>
-                }
-                body="Give us a call and we'll set up a time. Coffee is on us."
-              />
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
-                <Button href="/submit-resume" variant="gold" className="w-full sm:w-auto">
-                  Submit your résumé
-                </Button>
-                <Link
-                  href="/employers"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/25 px-7 py-3.5 text-sm font-semibold text-canvas transition-all hover:border-gold hover:text-gold sm:w-auto"
-                >
-                  Hire with Fit
-                  <Arrow />
-                </Link>
-              </div>
+              <h2 className="font-display text-[clamp(1.75rem,3.5vw,2.5rem)] font-light leading-tight tracking-tight text-navy">
+                Hiring, or looking?
+              </h2>
+              <p className="mt-3 max-w-md leading-relaxed text-body">
+                Give us a call and we will set up a time.
+              </p>
             </div>
-
-            <div className="overflow-hidden rounded-[2rem]">
-              <Image
-                src="/photos/team-03.jpg"
-                alt="A Fit Recruiting recruiter at her desk in the Mobile office"
-                width={1000}
-                height={1250}
-                sizes="(max-width: 1024px) 100vw, 38vw"
-                className="aspect-[4/5] w-full object-cover"
-              />
-            </div>
+            <Button href="/contact" className="shrink-0">
+              Get in touch
+            </Button>
           </div>
         </Container>
       </Section>

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { Button, Container, Section, SectionHeading } from "@/components/ui";
 import { CONTACT, PROCESS, STAFFING_MODELS } from "@/lib/content";
 
@@ -23,42 +22,28 @@ export default function EmployersPage() {
     <>
       <Section className="pt-14 lg:pt-20">
         <Container>
-          <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20">
-            <div>
-              <p className="eyebrow mb-5">For employers</p>
-              <h1 className="font-display text-[clamp(2.75rem,6.5vw,4.75rem)] font-light leading-[1.06] tracking-tight text-navy sm:leading-[1.02]">
-                We send fewer people.
-                <br />
-                <em className="italic text-gold-deep">On purpose.</em>
-              </h1>
-              <p className="mt-7 text-lg leading-relaxed text-body">
-                You will not get a stack to sort through. You will get a short
-                list of people we have actually sat down with, screened, and
-                would put our name behind.
-              </p>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
-                <Button href="/contact" className="w-full sm:w-auto">
-                  Start a search
-                </Button>
-                <a
-                  href={`tel:${CONTACT.phoneRaw}`}
-                  className="inline-flex w-full items-center justify-center rounded-full border border-navy/25 px-7 py-3.5 text-sm font-semibold text-navy transition-all hover:border-navy hover:bg-navy hover:text-canvas sm:w-auto"
-                >
-                  Call {CONTACT.phone}
-                </a>
-              </div>
-            </div>
-
-            <div className="overflow-hidden rounded-[2.75rem]">
-              <Image
-                src="/photos/team-03.jpg"
-                alt="A Fit Recruiting recruiter at her desk in the Mobile office"
-                width={1000}
-                height={1250}
-                priority
-                sizes="(max-width: 1024px) 100vw, 46vw"
-                className="aspect-[4/5] w-full object-cover"
-              />
+          <div className="max-w-2xl">
+            <p className="eyebrow mb-5">For employers</p>
+            <h1 className="font-display text-[clamp(2.75rem,6.5vw,4.75rem)] font-light leading-[1.06] tracking-tight text-navy sm:leading-[1.02]">
+              We send fewer people.
+              <br />
+              <em className="italic text-gold-deep">On purpose.</em>
+            </h1>
+            <p className="mt-7 text-lg leading-relaxed text-body">
+              You will not get a stack to sort through. You will get a short list
+              of people we have sat down with, screened, and would put our name
+              behind.
+            </p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
+              <Button href="/contact" className="w-full sm:w-auto">
+                Start a search
+              </Button>
+              <a
+                href={`tel:${CONTACT.phoneRaw}`}
+                className="inline-flex w-full items-center justify-center rounded-full border border-navy/25 px-7 py-3.5 text-sm font-semibold text-navy transition-all hover:border-navy hover:bg-navy hover:text-canvas sm:w-auto"
+              >
+                Call {CONTACT.phone}
+              </a>
             </div>
           </div>
         </Container>
@@ -71,14 +56,8 @@ export default function EmployersPage() {
             <SectionHeading
               tone="dark"
               eyebrow="What's included"
-              title={
-                <>
-                  Screening that
-                  <br />
-                  <em className="italic text-gold">actually screens.</em>
-                </>
-              }
-              body="Everyone we send has already been through all of this. You are meeting people who have been checked, not just sourced."
+              title="Everyone we send has been through all of this."
+              body="You are meeting people who have been checked, not just sourced."
             />
 
             <ul className="grid gap-4 sm:grid-cols-2">
@@ -106,7 +85,7 @@ export default function EmployersPage() {
       {/* --- Process --- */}
       <Section>
         <Container>
-          <SectionHeading eyebrow="How it goes" title="From job order to hire." />
+          <SectionHeading eyebrow="How it goes" title="From job order to hire." body="This is the whole process. It is not repeated anywhere else on the site." />
           <ol className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {PROCESS.map((p) => (
               <li
@@ -130,7 +109,7 @@ export default function EmployersPage() {
           <SectionHeading
             eyebrow="Engagement"
             title="Fees that fit the business."
-            body="We are boutique, which means our fees are negotiable and structured around what actually works for you."
+            body="Mostly direct hire, with room to flex. Our fees are negotiable and structured around what works for you."
           />
           <div className="mt-14 grid gap-5 lg:grid-cols-3">
             {STAFFING_MODELS.map((m) => (

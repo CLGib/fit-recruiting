@@ -10,6 +10,15 @@
  *  - No positioning against national agencies.
  *  - By appointment only. Never invite people to drop in.
  *
+ * SECOND REVIEW (2026-09-10) — also preserve these:
+ *  - Shorter and sharper over complete. Length was the headline complaint.
+ *  - Cut the two-part italic tagline pattern ("X. Y."). Eight of them on one
+ *    page is what made the copy read as AI written. One per page at most.
+ *  - Say each thing once. Candidate selling lives on /for-candidates, the
+ *    process lives on /employers, and neither is repeated on the homepage or
+ *    About.
+ *  - Staff photographs belong on the team page, not scattered across pages.
+ *
  * Job data lives in lib/jobs/, behind a JobSource adapter.
  */
 
