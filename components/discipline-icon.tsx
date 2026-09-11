@@ -1,4 +1,4 @@
-import type { SpecialtyIcon } from "@/lib/site/schema";
+import type { SpecialtyIcon } from "@/lib/site/copy/icons";
 
 /**
  * Thin-stroke line icons, one per discipline.

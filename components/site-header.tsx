@@ -13,12 +13,16 @@ import { useEffect, useRef, useState } from "react";
 //
 // TODO: add { href: "/team", label: "Meet the Team" } once lib/team.ts has real
 // names and bios. It is deliberately unlinked while entries are placeholders.
-const NAV = [
-  { href: "/for-candidates", label: "For Candidates" },
-  { href: "/employers", label: "For Employers" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
-];
+//
+// The words on each link are Fit's to edit (Site-wide in the portal); where
+// each one goes is fixed here.
+type Labels = {
+  candidates: string;
+  employers: string;
+  about: string;
+  contact: string;
+  button: string;
+};
 
 /**
  * Pages that live behind the For Candidates door.
@@ -38,7 +42,13 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export default function SiteHeader() {
+export default function SiteHeader({ labels }: { labels: Labels }) {
+  const NAV = [
+    { href: "/for-candidates", label: labels.candidates },
+    { href: "/employers", label: labels.employers },
+    { href: "/about", label: labels.about },
+    { href: "/contact", label: labels.contact },
+  ];
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [lifted, setLifted] = useState(false);
@@ -118,7 +128,7 @@ export default function SiteHeader() {
             href="/submit-resume"
             className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-canvas transition-all hover:bg-navy-700 hover:shadow-soft"
           >
-            Submit Résumé
+            {labels.button}
           </Link>
         </nav>
 
@@ -159,7 +169,7 @@ export default function SiteHeader() {
             onClick={() => setOpen(false)}
             className="mt-6 rounded-full bg-navy px-6 py-4 text-center text-sm font-semibold text-canvas"
           >
-            Submit Résumé
+            {labels.button}
           </Link>
         </nav>
       </div>

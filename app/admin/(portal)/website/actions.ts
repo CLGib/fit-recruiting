@@ -5,7 +5,8 @@ import { requireAdmin } from "@/lib/auth/guard";
 import { isAdminPreview } from "@/lib/admin/preview";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
-import { SCHEMAS, isContentKey, type ContentKey } from "@/lib/site/schema";
+import { isPageKey, pageDef, storageKey, type PageKey } from "@/lib/site/copy";
+import { errorName, readField, schemaFor, type PageDef, type Section } from "@/lib/site/copy/fields";
 
 export type SaveState = {
   status: "idle" | "saved" | "error";
@@ -22,10 +23,10 @@ const PREVIEW: SaveState = {
 const OFFLINE: SaveState = { status: "error", message: "Not connected to the database." };
 
 /**
- * Every edit changes the public site, and most blocks appear on more than one
- * page (contact details are in the footer of all of them), so a save clears
- * the whole site from the root layout. The site is a dozen pages, so this is
- * cheaper and far safer than keeping a map of which page shows which field.
+ * Every edit changes the public site, and plenty of copy appears on more than
+ * one page (the footer is on all of them), so a save clears the whole site
+ * from the root layout. A dozen pages makes that cheaper and far safer than
+ * keeping a map of which page shows which field.
  */
 function publish() {
   revalidatePath("/", "layout");
@@ -33,83 +34,98 @@ function publish() {
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "");
 
-/** Read a block's fields out of the form, in the shape its schema expects. */
-function readBlock(key: ContentKey, fd: FormData): unknown {
-  switch (key) {
-    case "contact":
-      return {
-        street: str(fd, "street"),
-        city: str(fd, "city"),
-        phone: str(fd, "phone"),
-        email: str(fd, "email"),
-      };
-    case "home":
-      return {
-        heroTitle: str(fd, "heroTitle"),
-        heroTitleAccent: str(fd, "heroTitleAccent"),
-        heroIntro: str(fd, "heroIntro"),
-      };
-    case "about":
-    case "employers":
-      return { intro: str(fd, "intro") };
-    case "specialties": {
-      const count = Math.min(Number(fd.get("count") ?? 0), 8);
-      const items = [];
-      for (let i = 0; i < count; i++) {
-        const title = str(fd, `title_${i}`).trim();
-        const body = str(fd, `body_${i}`).trim();
-        const icon = str(fd, `icon_${i}`) || "none";
-        // A row cleared out entirely is a removal, not an error.
-        if (title || body) items.push({ title, body, icon });
-      }
-      return { items };
-    }
-    case "team_page":
-      return { published: fd.get("published") === "on" };
-  }
+/** Which page and which section of it a form is for. */
+function locate(fd: FormData): { key: PageKey; page: PageDef; section: Section } | null {
+  const key = str(fd, "page");
+  if (!isPageKey(key)) return null;
+  const page = pageDef(key);
+  const section = page.sections[Number(fd.get("section"))];
+  return section ? { key, page, section } : null;
 }
 
-/** "items.0.title" -> "title_0", so errors land next to the right input. */
-function fieldName(path: PropertyKey[]): string {
-  if (path[0] === "items" && typeof path[1] === "number" && typeof path[2] === "string") {
-    return `${path[2]}_${path[1]}`;
-  }
-  return path.map(String).join(".") || "form";
-}
-
-export async function saveContent(_prev: SaveState, formData: FormData): Promise<SaveState> {
+/**
+ * Save one section of one page.
+ *
+ * Each field is its own row, so saving a section only ever writes that
+ * section's fields. Two people editing different sections of the same page
+ * cannot overwrite each other, and nothing is read back and merged first.
+ */
+export async function saveSection(_prev: SaveState, formData: FormData): Promise<SaveState> {
   // A server action is its own entry point, reachable without the page.
   const author = await requireAdmin();
-  if (isAdminPreview()) return PREVIEW;
-  if (!isSupabaseConfigured()) return OFFLINE;
 
-  const key = str(formData, "key");
-  if (!isContentKey(key)) return { status: "error", message: "Unknown section." };
+  const target = locate(formData);
+  if (!target) return { status: "error", message: "Unknown page or section." };
+  const { key, page, section } = target;
 
-  const parsed = SCHEMAS[key].safeParse(readBlock(key, formData));
-  if (!parsed.success) {
-    const errors: Record<string, string> = {};
-    for (const issue of parsed.error.issues) {
-      errors[fieldName(issue.path)] ??= issue.message;
+  // Validation runs before the preview and database checks. It is pure, and
+  // it means the design preview shows real feedback on a bad value instead of
+  // refusing before looking at it. Nothing is written until after both checks.
+  const errors: Record<string, string> = {};
+  const now = new Date().toISOString();
+  const rows: { key: string; value: unknown; updated_at: string; updated_by: string }[] = [];
+
+  for (const field of section.keys) {
+    const def = page.fields[field];
+    const parsed = schemaFor(def).safeParse(readField(def, field, formData));
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        errors[errorName(field, issue.path)] ??= issue.message;
+      }
+      continue;
     }
+    rows.push({ key: storageKey(key, field), value: parsed.data, updated_at: now, updated_by: author });
+  }
+
+  if (Object.keys(errors).length) {
     return { status: "error", message: "Please check the highlighted fields.", errors };
   }
+  if (isAdminPreview()) return PREVIEW;
+  if (!isSupabaseConfigured()) return OFFLINE;
 
   try {
     const { error } = await createSupabaseAdminClient()
       .from("site_content")
-      .upsert(
-        { key, value: parsed.data, updated_at: new Date().toISOString(), updated_by: author },
-        { onConflict: "key" },
-      );
+      .upsert(rows, { onConflict: "key" });
     if (error) throw error;
   } catch (err) {
-    console.error(`[saveContent:${key}] failed:`, err);
+    console.error(`[saveSection:${key}] failed:`, err);
     return { status: "error", message: "That did not save. Please try again." };
   }
 
   publish();
   return { status: "saved", message: "Saved. It is live on the website now." };
+}
+
+/**
+ * Put a section back to the site's original wording.
+ *
+ * Deletes that section's rows, which is all "original" means: with no row, a
+ * field shows its built-in default. The safety net that makes it reasonable to
+ * hand every word on the site to people who are not developers.
+ */
+export async function resetSection(_prev: SaveState, formData: FormData): Promise<SaveState> {
+  await requireAdmin();
+  if (isAdminPreview()) return PREVIEW;
+  if (!isSupabaseConfigured()) return OFFLINE;
+
+  const target = locate(formData);
+  if (!target) return { status: "error", message: "Unknown page or section." };
+  const { key, section } = target;
+
+  try {
+    const { error } = await createSupabaseAdminClient()
+      .from("site_content")
+      .delete()
+      .in("key", section.keys.map((f) => storageKey(key, f)));
+    if (error) throw error;
+  } catch (err) {
+    console.error(`[resetSection:${key}] failed:`, err);
+    return { status: "error", message: "That did not restore. Please try again." };
+  }
+
+  publish();
+  return { status: "saved", message: "Restored the original wording." };
 }
 
 // ---------------------------------------------------------------------------

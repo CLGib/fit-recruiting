@@ -12,11 +12,17 @@
 -- "easy to manage" and "modern look" from pulling against each other.
 
 -- --------------------------------------------------------------------------
--- 1. Editable copy and contact details.
+-- 1. Every piece of copy on the public site.
 --
--- One row per block (contact, home, about, ...). The shape of each block is
--- enforced in lib/site/schema.ts, and every public page falls back to the
--- built-in copy when a block is missing, so an empty table is a working site.
+-- ONE ROW PER FIELD, keyed "page.field" (for example "home.heroTitle" or
+-- "site.phone"). Per field rather than per page for two reasons: saving one
+-- section of the editor can never overwrite another section someone else just
+-- saved, and a single bad value falls back to its default on its own instead
+-- of taking the rest of that page's copy with it.
+--
+-- The shape of every field is declared in lib/site/copy/pages/*.ts, and every
+-- page falls back to its built-in wording for any field with no row, so an
+-- empty table is a working site that reads exactly as it did before editing.
 -- --------------------------------------------------------------------------
 create table if not exists public.site_content (
   key         text primary key,

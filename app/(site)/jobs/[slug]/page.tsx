@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Arrow, Container, Section } from "@/components/ui";
-import { getContent } from "@/lib/site/content";
-import { phoneHref } from "@/lib/site/schema";
+import { getCopy } from "@/lib/site/copy/read";
+import { phoneHref } from "@/lib/site/format";
+import { withTokens } from "@/lib/site/tokens";
 import { getJob, listActiveJobs } from "@/lib/jobs/source";
 
 export const revalidate = 300;
@@ -38,7 +39,7 @@ function formatDate(iso: string) {
 }
 
 export default async function JobDetailPage({ params }: Params) {
-  const contact = await getContent("contact");
+  const { jobs: c, site: contact } = await getCopy();
   const { slug } = await params;
   const job = await getJob(slug);
   if (!job || job.status !== "active") notFound();
@@ -55,7 +56,7 @@ export default async function JobDetailPage({ params }: Params) {
           className="inline-flex items-center gap-2 text-sm font-medium text-body transition-colors hover:text-navy"
         >
           <Arrow className="rotate-180" />
-          All open roles
+          {c.backLink}
         </Link>
 
         <div className="mt-10 grid gap-14 lg:grid-cols-[1.5fr_1fr] lg:gap-20">
@@ -82,18 +83,12 @@ export default async function JobDetailPage({ params }: Params) {
             {job.summary ? (
               <p className="mt-8 text-lg leading-relaxed text-body">{job.summary}</p>
             ) : (
-              <p className="mt-8 text-lg leading-relaxed text-body">
-                We&rsquo;re actively placing this role. Reach out and we&rsquo;ll walk
-                you through the full description, the team, and what the client is
-                really looking for, including the parts that never fit in a job posting.
-              </p>
+              <p className="mt-8 text-lg leading-relaxed text-body">{c.noSummary}</p>
             )}
 
             {job.responsibilities && job.responsibilities.length > 0 && (
               <section className="mt-12">
-                <h2 className="font-display text-3xl font-light text-navy">
-                  What you&rsquo;ll do
-                </h2>
+                <h2 className="font-display text-3xl font-light text-navy">{c.responsibilitiesHeading}</h2>
                 <ul className="mt-6 space-y-3">
                   {job.responsibilities.map((r) => (
                     <li key={r} className="flex gap-4 leading-relaxed text-body">
@@ -110,9 +105,7 @@ export default async function JobDetailPage({ params }: Params) {
 
             {job.requirements && job.requirements.length > 0 && (
               <section className="mt-12">
-                <h2 className="font-display text-3xl font-light text-navy">
-                  What we&rsquo;re looking for
-                </h2>
+                <h2 className="font-display text-3xl font-light text-navy">{c.requirementsHeading}</h2>
                 <ul className="mt-6 space-y-3">
                   {job.requirements.map((r) => (
                     <li key={r} className="flex gap-4 leading-relaxed text-body">
@@ -131,52 +124,49 @@ export default async function JobDetailPage({ params }: Params) {
           {/* --- Apply rail --- */}
           <aside className="lg:sticky lg:top-32 lg:self-start">
             <div className="rounded-[2rem] border border-line-soft bg-canvas-warm/70 p-8">
-              <h2 className="font-display text-2xl font-normal text-navy">
-                Interested in this role?
-              </h2>
-              <p className="mt-3 text-[0.9375rem] leading-relaxed text-body">
-                Send your résumé and we&rsquo;ll be in touch. Every application is
-                read by a person here in Mobile, not by a filter.
-              </p>
+              <h2 className="font-display text-2xl font-normal text-navy">{c.applyHeading}</h2>
+              <p className="mt-3 text-[0.9375rem] leading-relaxed text-body">{c.applyBody}</p>
 
               <Link
                 href={`/submit-resume?role=${job.slug}`}
                 className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full bg-navy px-7 py-4 text-sm font-semibold text-canvas transition-all hover:bg-navy-700 hover:shadow-soft"
               >
-                Apply for this role
+                {c.applyButton}
                 <Arrow />
               </Link>
 
               <dl className="mt-8 space-y-4 border-t border-line pt-8 text-sm">
                 <div className="flex justify-between gap-4">
-                  <dt className="text-body">Posted</dt>
+                  <dt className="text-body">{c.labelPosted}</dt>
                   <dd className="text-navy">{formatDate(job.postedAt)}</dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="text-body">Employment</dt>
+                  <dt className="text-body">{c.labelEmployment}</dt>
                   <dd className="text-navy">{job.type}</dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="text-body">Location</dt>
+                  <dt className="text-body">{c.labelLocation}</dt>
                   <dd className="text-navy">{job.location}</dd>
                 </div>
                 {job.salary && (
                   <div className="flex justify-between gap-4">
-                    <dt className="text-body">Compensation</dt>
+                    <dt className="text-body">{c.labelPay}</dt>
                     <dd className="text-navy">{job.salary}</dd>
                   </div>
                 )}
               </dl>
 
               <p className="mt-8 border-t border-line pt-6 text-sm leading-relaxed text-body">
-                Questions first? Call{" "}
-                <a
-                  href={`tel:${phoneHref(contact.phone)}`}
-                  className="font-medium text-navy underline underline-offset-4 hover:text-gold-deep"
-                >
-                  {contact.phone}
-                </a>
-                .
+                {withTokens(c.questions, {
+                  phone: (
+                    <a
+                      href={`tel:${phoneHref(contact.phone)}`}
+                      className="font-medium text-navy underline underline-offset-4 hover:text-gold-deep"
+                    >
+                      {contact.phone}
+                    </a>
+                  ),
+                })}
               </p>
             </div>
           </aside>
@@ -185,9 +175,7 @@ export default async function JobDetailPage({ params }: Params) {
         {/* --- Related --- */}
         {related.length > 0 && (
           <section className="mt-24 border-t border-line-soft pt-14">
-            <h2 className="font-display text-3xl font-light text-navy">
-              Similar openings
-            </h2>
+            <h2 className="font-display text-3xl font-light text-navy">{c.similarHeading}</h2>
             <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((r) => (
                 <li key={r.slug}>

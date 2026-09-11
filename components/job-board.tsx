@@ -4,20 +4,42 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Arrow } from "@/components/ui";
 import type { Job } from "@/lib/jobs/types";
+import type { Copy } from "@/lib/site/copy";
+import { fill } from "@/lib/site/format";
 
-export default function JobBoard({ jobs }: { jobs: Job[] }) {
+type BoardCopy = Pick<
+  Copy["jobs"],
+  | "searchLabel"
+  | "searchPlaceholder"
+  | "filterLabel"
+  | "filterAll"
+  | "resultsOne"
+  | "resultsMany"
+  | "emptyHeading"
+  | "emptyBody"
+  | "emptyButton"
+>;
+
+/**
+ * "No filter" is an empty string internally, not the word "All". The label is
+ * Fit's to edit, so it cannot also be the value the filter logic compares
+ * against: renaming it would have silently broken the filter.
+ */
+const ALL = "";
+
+export default function JobBoard({ jobs, copy }: { jobs: Job[]; copy: BoardCopy }) {
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("All");
+  const [category, setCategory] = useState(ALL);
 
   const categories = useMemo(
-    () => ["All", ...Array.from(new Set(jobs.flatMap((j) => j.categories))).sort()],
+    () => [ALL, ...Array.from(new Set(jobs.flatMap((j) => j.categories))).sort()],
     [jobs],
   );
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     return jobs.filter((job) => {
-      const matchesCategory = category === "All" || job.categories.includes(category);
+      const matchesCategory = category === ALL || job.categories.includes(category);
       const matchesQuery =
         !q ||
         job.title.toLowerCase().includes(q) ||
@@ -32,7 +54,7 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
       {/* --- Controls --- */}
       <div className="rounded-[2rem] border border-line-soft bg-canvas-warm/60 p-6 lg:p-8">
         <label htmlFor="job-search" className="eyebrow mb-3 block">
-          Search roles
+          {copy.searchLabel}
         </label>
         <div className="relative">
           <svg
@@ -54,19 +76,19 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Job title, location, or discipline"
+            placeholder={copy.searchPlaceholder}
             className="w-full rounded-full border border-line bg-canvas py-4 pl-14 pr-5 text-[0.9375rem] text-navy placeholder:text-body focus:border-navy focus:outline-none"
           />
         </div>
 
         <fieldset className="mt-6">
-          <legend className="eyebrow mb-3">Filter by discipline</legend>
+          <legend className="eyebrow mb-3">{copy.filterLabel}</legend>
           <div className="flex flex-wrap gap-2">
             {categories.map((c) => {
               const active = c === category;
               return (
                 <button
-                  key={c}
+                  key={c || "__all"}
                   type="button"
                   onClick={() => setCategory(c)}
                   aria-pressed={active}
@@ -76,7 +98,7 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
                       : "border-line bg-canvas text-body hover:border-navy/40 hover:text-navy"
                   }`}
                 >
-                  {c}
+                  {c || copy.filterAll}
                 </button>
               );
             })}
@@ -86,25 +108,20 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
 
       {/* --- Result count (announced to screen readers) --- */}
       <p aria-live="polite" className="mt-8 text-sm text-body">
-        Showing {results.length} {results.length === 1 ? "role" : "roles"}
-        {category !== "All" && ` in ${category}`}
+        {results.length === 1 ? copy.resultsOne : fill(copy.resultsMany, { count: results.length })}
+        {category !== ALL && ` in ${category}`}
       </p>
 
       {/* --- Results --- */}
       {results.length === 0 ? (
         <div className="mt-6 rounded-[2rem] border border-dashed border-line bg-canvas-warm/40 px-8 py-20 text-center">
-          <p className="font-display text-3xl font-light text-navy">
-            No roles match that search.
-          </p>
-          <p className="mx-auto mt-4 max-w-md text-body">
-            We place plenty of roles that never make it to the board. Send us your
-            résumé and we&rsquo;ll reach out when something fits.
-          </p>
+          <p className="font-display text-3xl font-light text-navy">{copy.emptyHeading}</p>
+          <p className="mx-auto mt-4 max-w-md text-body">{copy.emptyBody}</p>
           <Link
             href="/submit-resume"
             className="mt-8 inline-flex items-center gap-2 rounded-full bg-navy px-7 py-3.5 text-sm font-semibold text-canvas transition-all hover:bg-navy-700"
           >
-            Submit your résumé
+            {copy.emptyButton}
             <Arrow />
           </Link>
         </div>
@@ -124,26 +141,17 @@ export default function JobBoard({ jobs }: { jobs: Job[] }) {
                     {job.location} · {job.type}
                   </p>
                   {job.summary && (
-                    <p className="mt-3 max-w-xl text-[0.9375rem] leading-relaxed text-body">
-                      {job.summary}
-                    </p>
+                    <p className="mt-3 max-w-xl text-[0.9375rem] leading-relaxed text-body">{job.summary}</p>
                   )}
                   <ul className="mt-4 flex flex-wrap gap-2">
                     {job.categories.map((c) => (
-                      <li
-                        key={c}
-                        className="rounded-full bg-gold/15 px-3 py-1 text-xs font-medium text-navy-700"
-                      >
+                      <li key={c} className="rounded-full bg-gold/15 px-3 py-1 text-xs font-medium text-navy-700">
                         {c}
                       </li>
                     ))}
                   </ul>
                 </div>
-                {job.salary && (
-                  <p className="shrink-0 font-display text-xl font-light text-navy">
-                    {job.salary}
-                  </p>
-                )}
+                {job.salary && <p className="shrink-0 font-display text-xl font-light text-navy">{job.salary}</p>}
                 <span
                   aria-hidden="true"
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line text-navy transition-all duration-300 group-hover:border-gold group-hover:bg-gold group-hover:text-ink"

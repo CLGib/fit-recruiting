@@ -1,34 +1,29 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader, PortalPage } from "@/components/admin/page-header";
-import {
-  ContactForm,
-  HomeForm,
-  IntroForm,
-  SpecialtiesForm,
-  TeamPageForm,
-} from "@/components/admin/website/content-forms";
 import { requireAdmin } from "@/lib/auth/guard";
 import { isAdminPreview } from "@/lib/admin/preview";
-import { getContentMeta, getSiteContent } from "@/lib/site/content";
+import { PAGE_KEYS, PAGES } from "@/lib/site/copy";
+import { getCopyMeta } from "@/lib/site/copy/read";
 
-export const metadata: Metadata = { title: "Pages & contact" };
+export const metadata: Metadata = { title: "Pages" };
 
-// Always the live values: this is the page people edit them on.
+// Always current: this is where people come to see what has changed.
 export const dynamic = "force-dynamic";
 
-function Group({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="mt-12 first:mt-0">
-      <h2 className="eyebrow mb-4">{label}</h2>
-      <div className="space-y-5">{children}</div>
-    </div>
-  );
+function when(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-export default async function WebsitePage() {
+export default async function WebsitePages() {
   await requireAdmin();
-  const [content, meta] = await Promise.all([getSiteContent(), getContentMeta()]);
+  const meta = await getCopyMeta();
+
+  const lastChanged = (page: string) =>
+    Object.entries(meta)
+      .filter(([k]) => k.startsWith(`${page}.`))
+      .map(([, m]) => m)
+      .sort((a, b) => b.updated_at.localeCompare(a.updated_at))[0];
 
   return (
     <PortalPage>
@@ -37,8 +32,9 @@ export default async function WebsitePage() {
         title="Your website."
         intro={
           <>
-            Change the words, numbers and details on the public site. Saving puts
-            a change live straight away. Job postings are edited under{" "}
+            Every word on the public site, page by page. Saving puts a change live
+            straight away, and any section can be put back to its original
+            wording. Job postings are edited under{" "}
             <Link href="/admin/roles" className="font-medium text-navy underline underline-offset-4">
               Roles
             </Link>
@@ -52,45 +48,35 @@ export default async function WebsitePage() {
           role="status"
           className="mb-8 rounded-2xl border border-dashed border-line bg-canvas-warm/60 px-6 py-5 text-[0.9375rem] leading-relaxed text-body"
         >
-          <span className="font-semibold text-navy">Design preview.</span> You
-          can try every field, but nothing is saved.
+          <span className="font-semibold text-navy">Design preview.</span> You can
+          try every field, but nothing is saved.
         </p>
       )}
 
-      <Group label="Everywhere">
-        <ContactForm initial={content.contact} meta={meta.contact} />
-      </Group>
-
-      <Group label="Homepage">
-        <HomeForm initial={content.home} meta={meta.home} />
-      </Group>
-
-      <Group label="About page">
-        <IntroForm
-          contentKey="about"
-          title="About introduction"
-          description="The paragraph under the About page headline."
-          viewHref="/about"
-          initial={content.about}
-          meta={meta.about}
-        />
-        <SpecialtiesForm initial={content.specialties} meta={meta.specialties} />
-      </Group>
-
-      <Group label="For Employers page">
-        <IntroForm
-          contentKey="employers"
-          title="For Employers introduction"
-          description="The paragraph under the For Employers headline."
-          viewHref="/employers"
-          initial={content.employers}
-          meta={meta.employers}
-        />
-      </Group>
-
-      <Group label="Team page">
-        <TeamPageForm initial={content.team_page} meta={meta.team_page} />
-      </Group>
+      <ul className="grid gap-4 sm:grid-cols-2">
+        {PAGE_KEYS.map((key) => {
+          const page = PAGES[key];
+          // The team's copy sits with the people on one page.
+          const href = key === "team" ? "/admin/website/team" : `/admin/website/${key}`;
+          const changed = lastChanged(key);
+          return (
+            <li key={key}>
+              <Link
+                href={href}
+                className="group flex h-full flex-col rounded-[1.75rem] border border-line-soft bg-canvas-warm/40 p-7 transition-all hover:border-line hover:bg-canvas-warm"
+              >
+                <h2 className="font-display text-2xl font-normal text-navy transition-colors group-hover:text-gold-deep">
+                  {page.label}
+                </h2>
+                <p className="mt-2 flex-1 text-[0.9375rem] leading-relaxed text-body">{page.description}</p>
+                <p className="mt-5 text-xs text-body">
+                  {changed ? `Last changed ${when(changed.updated_at)}` : "Original wording"}
+                </p>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </PortalPage>
   );
 }

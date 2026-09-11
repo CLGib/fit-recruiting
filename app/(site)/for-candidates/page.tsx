@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Arrow, Button, Container, Section } from "@/components/ui";
 import { listActiveJobs } from "@/lib/jobs/source";
+import { getCopy } from "@/lib/site/copy/read";
+import { fill } from "@/lib/site/format";
 
 export const metadata: Metadata = {
   title: "For Candidates",
@@ -12,48 +14,29 @@ export const metadata: Metadata = {
 export const revalidate = 300;
 
 /**
- * The single front door for job seekers.
- *
- * Added at the client's request: candidates previously had four separate
- * navigation items and no obvious first click. Everything here still has its
- * own page and URL; this page's only job is to make the choice obvious and then
- * get out of the way, so it stays deliberately short.
+ * The single front door for job seekers. Its only job is to make the choice
+ * obvious and get out of the way, so it stays deliberately short. Each card's
+ * destination is fixed here; its words are Fit's to edit.
  */
-const PATHS = [
-  {
-    href: "/submit-resume",
-    label: "Send us your résumé",
-    body: "A recruiter here in Mobile reads it. A good portion of what we fill never reaches a job board, so this is how you hear about those.",
-  },
-  {
-    href: "/resume-audit",
-    label: "Get your résumé reviewed, free",
-    body: "Upload it and get written notes back in about a minute on what to change. No account, and we do not keep the file.",
-  },
-  {
-    href: "/resources",
-    label: "Read the interview guide",
-    body: "What to bring, what to ask, and the questions worth rehearsing before you walk in.",
-  },
-];
-
 export default async function ForCandidatesPage() {
-  const jobs = await listActiveJobs();
+  const [jobs, { candidates: c }] = await Promise.all([listActiveJobs(), getCopy()]);
+
+  const paths = [
+    { href: "/submit-resume", label: c.submitTitle, body: c.submitBody },
+    { href: "/resume-audit", label: c.auditTitle, body: c.auditBody },
+    { href: "/resources", label: c.guideTitle, body: c.guideBody },
+  ];
 
   return (
     <>
       <Section className="pb-0 pt-14 lg:pt-20">
         <Container>
           <div className="max-w-2xl">
-            <p className="eyebrow mb-5">For candidates</p>
+            <p className="eyebrow mb-5">{c.eyebrow}</p>
             <h1 className="font-display text-[clamp(2.5rem,6vw,4rem)] font-light leading-[1.05] tracking-tight text-navy">
-              Start here.
+              {c.title}
             </h1>
-            <p className="mt-6 text-lg leading-relaxed text-body">
-              Working with us never costs you anything. Companies pay our fees.
-              Below is everything open right now, and three ways we can help
-              whether or not one of them is right for you.
-            </p>
+            <p className="mt-6 text-lg leading-relaxed text-body">{c.intro}</p>
           </div>
         </Container>
       </Section>
@@ -62,13 +45,13 @@ export default async function ForCandidatesPage() {
         <Container>
           <div className="flex flex-wrap items-baseline justify-between gap-4">
             <h2 className="font-display text-[clamp(1.75rem,3.5vw,2.5rem)] font-light leading-tight tracking-tight text-navy">
-              Open roles
+              {c.rolesHeading}
             </h2>
             <Link
               href="/jobs"
               className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-navy transition-colors hover:text-gold-deep"
             >
-              Search all {jobs.length}
+              {fill(c.rolesLink, { count: jobs.length })}
               <Arrow />
             </Link>
           </div>
@@ -104,7 +87,7 @@ export default async function ForCandidatesPage() {
       <Section className="pt-16 lg:pt-20">
         <Container>
           <ul className="grid gap-4 lg:grid-cols-3">
-            {PATHS.map((path) => (
+            {paths.map((path) => (
               <li key={path.href}>
                 <Link
                   href={path.href}
@@ -113,9 +96,7 @@ export default async function ForCandidatesPage() {
                   <h2 className="font-display text-2xl font-normal leading-snug text-navy transition-colors group-hover:text-gold-deep">
                     {path.label}
                   </h2>
-                  <p className="mt-3 flex-1 text-[0.9375rem] leading-relaxed text-body">
-                    {path.body}
-                  </p>
+                  <p className="mt-3 flex-1 text-[0.9375rem] leading-relaxed text-body">{path.body}</p>
                   <span
                     aria-hidden="true"
                     className="mt-6 flex h-11 w-11 items-center justify-center rounded-full border border-line text-navy transition-all duration-300 group-hover:border-gold group-hover:bg-gold group-hover:text-ink"
@@ -129,15 +110,12 @@ export default async function ForCandidatesPage() {
 
           <div className="mt-14 rounded-[2.5rem] bg-navy on-navy p-10 lg:p-14">
             <h2 className="font-display text-[clamp(1.75rem,3.5vw,2.5rem)] font-light leading-tight tracking-tight text-canvas">
-              Rather just talk to someone?
+              {c.talkHeading}
             </h2>
-            <p className="mt-4 max-w-xl leading-relaxed text-navy-100">
-              Call the office and we will set up a time. Appointments only, so
-              whoever you meet has read your résumé first.
-            </p>
+            <p className="mt-4 max-w-xl leading-relaxed text-navy-100">{c.talkBody}</p>
             <div className="mt-8">
               <Button href="/contact" variant="gold">
-                Get in touch
+                {c.talkButton}
               </Button>
             </div>
           </div>

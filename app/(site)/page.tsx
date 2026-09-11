@@ -1,24 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button, Container, Section, Arrow } from "@/components/ui";
-import { BRAND_STAMP } from "@/lib/content";
 import { listActiveJobs } from "@/lib/jobs/source";
-import { getContent } from "@/lib/site/content";
+import { getCopy } from "@/lib/site/copy/read";
+import { fill } from "@/lib/site/format";
 
 export const revalidate = 300;
 
 /**
- * The homepage.
- *
- * Cut back hard on the client's instruction (2026-09-10). It previously tried
- * to introduce the firm, sell candidates, list specialties, explain the
- * employer process and close twice, which meant a lot of scrolling and eight
- * separate taglines. It now does three things: says who Fit is, shows what is
- * open, and says what makes them different. Selling candidates happens on
- * /for-candidates and the process lives on /employers, each said once.
+ * The homepage: who Fit is, what is open, and what makes them different.
+ * Every word is editable in the portal (Website → Pages → Homepage).
  */
 export default async function HomePage() {
-  const [jobs, home] = await Promise.all([listActiveJobs(), getContent("home")]);
+  const [jobs, { home: c }] = await Promise.all([listActiveJobs(), getCopy()]);
 
   return (
     <>
@@ -26,19 +20,19 @@ export default async function HomePage() {
         <Container>
           <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20">
             <div className="rise">
-              <p className="eyebrow mb-5">Mobile, Alabama · Gulf Coast</p>
+              <p className="eyebrow mb-5">{c.heroEyebrow}</p>
               <h1 className="font-display text-[clamp(2.75rem,7.5vw,5.75rem)] font-light leading-[1.06] tracking-tight text-navy sm:leading-[0.98]">
-                {home.heroTitle}
+                {c.heroTitle}
                 <br />
-                <em className="italic text-gold-deep">{home.heroTitleAccent}</em>
+                <em className="italic text-gold-deep">{c.heroTitleAccent}</em>
               </h1>
-              <p className="mt-7 max-w-lg text-lg leading-relaxed text-body">{home.heroIntro}</p>
+              <p className="mt-7 max-w-lg text-lg leading-relaxed text-body">{c.heroIntro}</p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
                 <Button href="/for-candidates" className="w-full sm:w-auto">
-                  I am looking for a job
+                  {c.heroButtonCandidates}
                 </Button>
                 <Button href="/employers" variant="outline" className="w-full sm:w-auto">
-                  I am hiring
+                  {c.heroButtonEmployers}
                 </Button>
               </div>
             </div>
@@ -64,13 +58,13 @@ export default async function HomePage() {
         <Container>
           <div className="flex flex-wrap items-baseline justify-between gap-4">
             <h2 className="font-display text-[clamp(2rem,4.5vw,3rem)] font-light leading-tight tracking-tight text-navy">
-              Open this week
+              {c.jobsHeading}
             </h2>
             <Link
               href="/jobs"
               className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-navy transition-colors hover:text-gold-deep"
             >
-              Search all {jobs.length} openings
+              {fill(c.jobsLink, { count: jobs.length })}
               <Arrow />
             </Link>
           </div>
@@ -103,53 +97,30 @@ export default async function HomePage() {
 
           <div className="mt-10">
             <Button href="/submit-resume" variant="outline">
-              Not seeing it? Send your résumé
+              {c.jobsButton}
             </Button>
           </div>
         </Container>
       </Section>
 
-      {/* Local. Trusted. Connected. — the one piece of positioning on the page. */}
       <Section className="on-navy bg-navy">
         <Container>
           <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
             <h2 className="font-display text-[clamp(2.25rem,5vw,3.5rem)] font-light leading-[1.06] tracking-tight text-canvas lg:sticky lg:top-32 lg:self-start">
-              {BRAND_STAMP.map((word) => (
-                <span key={word} className="block">
+              {c.stampWords.map((word, i) => (
+                <span key={i} className="block">
                   {word}
                 </span>
               ))}
             </h2>
 
             <dl className="grid gap-8 sm:grid-cols-2">
-              <div>
-                <dt className="font-display text-2xl font-normal text-gold">Local</dt>
-                <dd className="mt-3 leading-relaxed text-navy-100">
-                  We live here. Every placement we make is on the Gulf Coast, and
-                  we know which companies people stay at.
-                </dd>
-              </div>
-              <div>
-                <dt className="font-display text-2xl font-normal text-gold">Trusted</dt>
-                <dd className="mt-3 leading-relaxed text-navy-100">
-                  Reference checks, background checks, skills testing. We would
-                  rather tell a client a role is hard to fill than send filler.
-                </dd>
-              </div>
-              <div>
-                <dt className="font-display text-2xl font-normal text-gold">Connected</dt>
-                <dd className="mt-3 leading-relaxed text-navy-100">
-                  A good portion of what we fill never reaches a job board.
-                  Knowing us is how people hear about those roles.
-                </dd>
-              </div>
-              <div>
-                <dt className="font-display text-2xl font-normal text-gold">Free to you</dt>
-                <dd className="mt-3 leading-relaxed text-navy-100">
-                  If you are looking for work, our fees are paid by the companies
-                  hiring. You are never charged.
-                </dd>
-              </div>
+              {c.pillars.map((p, i) => (
+                <div key={i}>
+                  <dt className="font-display text-2xl font-normal text-gold">{p.title}</dt>
+                  <dd className="mt-3 leading-relaxed text-navy-100">{p.body}</dd>
+                </div>
+              ))}
             </dl>
           </div>
         </Container>
@@ -160,14 +131,12 @@ export default async function HomePage() {
           <div className="grain flex flex-col items-start gap-6 rounded-[2.75rem] bg-canvas-deep px-8 py-14 sm:flex-row sm:items-center sm:justify-between lg:px-14">
             <div>
               <h2 className="font-display text-[clamp(1.75rem,3.5vw,2.5rem)] font-light leading-tight tracking-tight text-navy">
-                Hiring, or looking?
+                {c.ctaHeading}
               </h2>
-              <p className="mt-3 max-w-md leading-relaxed text-body">
-                Give us a call and we will set up a time.
-              </p>
+              <p className="mt-3 max-w-md leading-relaxed text-body">{c.ctaBody}</p>
             </div>
             <Button href="/contact" className="shrink-0">
-              Get in touch
+              {c.ctaButton}
             </Button>
           </div>
         </Container>

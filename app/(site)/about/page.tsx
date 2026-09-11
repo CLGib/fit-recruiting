@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import DisciplineIcon from "@/components/discipline-icon";
 import { Button, Container, Section, SectionHeading } from "@/components/ui";
-import { getSiteContent } from "@/lib/site/content";
+import { isSpecialtyIcon } from "@/lib/site/copy/icons";
+import { getCopy } from "@/lib/site/copy/read";
 
 export const metadata: Metadata = {
   title: "About",
@@ -10,27 +11,21 @@ export const metadata: Metadata = {
     "Fit Recruiting is a boutique recruiting firm in Mobile, Alabama, placing accounting, IT, administrative, and executive talent across the Gulf Coast.",
 };
 
-const MARKETS = [
-  { place: "Mobile", note: "Our home. Downtown, midtown, west Mobile, and the port." },
-  { place: "Baldwin County", note: "Spanish Fort, Daphne, Fairhope, Foley, and the beaches." },
-  { place: "Mississippi Gulf Coast", note: "Pascagoula, Moss Point, and across the state line." },
-];
-
 export default async function AboutPage() {
-  const { about, specialties } = await getSiteContent();
+  const { about: c } = await getCopy();
 
   return (
     <>
       <Section className="pb-0 pt-14 lg:pt-20">
         <Container>
           <div className="max-w-3xl">
-            <p className="eyebrow mb-5">About Fit</p>
+            <p className="eyebrow mb-5">{c.eyebrow}</p>
             <h1 className="font-display text-[clamp(2.75rem,6.5vw,5rem)] font-light leading-[1.02] tracking-tight text-navy">
-              Boutique by choice,
+              {c.title}
               <br />
-              <em className="italic text-gold-deep">not by size.</em>
+              <em className="italic text-gold-deep">{c.titleAccent}</em>
             </h1>
-            <p className="mt-8 text-xl leading-relaxed text-body">{about.intro}</p>
+            <p className="mt-8 text-xl leading-relaxed text-body">{c.intro}</p>
           </div>
         </Container>
       </Section>
@@ -52,23 +47,13 @@ export default async function AboutPage() {
         </Container>
       </Section>
 
-      {/* --- Market --- */}
       <Section>
         <Container>
-          <SectionHeading
-            eyebrow="Why Fit"
-            title="Where we work."
-            body="We are not calling from three states away. We know these companies, these neighborhoods, and what a commute across the bay really costs you."
-          />
+          <SectionHeading eyebrow={c.marketsEyebrow} title={c.marketsTitle} body={c.marketsBody} />
           <div className="mt-14 grid gap-5 lg:grid-cols-3">
-            {MARKETS.map((m) => (
-              <div
-                key={m.place}
-                className="rounded-3xl border border-line-soft bg-canvas-warm/60 p-9"
-              >
-                <h3 className="font-display text-3xl font-light leading-tight text-navy">
-                  {m.place}
-                </h3>
+            {c.markets.map((m, i) => (
+              <div key={i} className="rounded-3xl border border-line-soft bg-canvas-warm/60 p-9">
+                <h3 className="font-display text-3xl font-light leading-tight text-navy">{m.place}</h3>
                 <p className="mt-4 leading-relaxed text-body">{m.note}</p>
               </div>
             ))}
@@ -76,28 +61,18 @@ export default async function AboutPage() {
         </Container>
       </Section>
 
-      {/* --- Disciplines --- */}
       <Section className="pt-0">
         <Container>
-          <SectionHeading
-            eyebrow="Disciplines"
-            title="What we recruit for."
-            body="Four areas we know well, because knowing a field is the only honest way to judge someone working in it."
-          />
+          <SectionHeading eyebrow={c.specialtiesEyebrow} title={c.specialtiesTitle} body={c.specialtiesBody} />
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {specialties.items.map((s, i) => (
-              <div
-                key={`${s.title}-${i}`}
-                className="rounded-3xl border border-line-soft bg-canvas-warm/50 p-8"
-              >
-                {s.icon !== "none" && (
+            {c.specialties.map((s, i) => (
+              <div key={i} className="rounded-3xl border border-line-soft bg-canvas-warm/50 p-8">
+                {isSpecialtyIcon(s.icon) && s.icon !== "none" && (
                   <div className="mb-7 text-navy-700">
                     <DisciplineIcon icon={s.icon} />
                   </div>
                 )}
-                <h3 className="font-display text-2xl font-normal leading-snug text-navy">
-                  {s.title}
-                </h3>
+                <h3 className="font-display text-2xl font-normal leading-snug text-navy">{s.title}</h3>
                 <p className="mt-3 text-[0.9375rem] leading-relaxed text-body">{s.body}</p>
               </div>
             ))}
@@ -105,21 +80,20 @@ export default async function AboutPage() {
         </Container>
       </Section>
 
-      {/* One CTA, then the page ends. How Fit engages and how Fit works used
-          to be repeated here; both live on /employers now. */}
+      {/* One CTA, then the page ends. How Fit engages and how Fit works live on
+          /employers, said once. */}
       <Section className="pt-0">
         <Container>
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <Button href="/for-candidates" className="w-full sm:w-auto">
-              I am looking for a job
+              {c.buttonCandidates}
             </Button>
             <Button href="/employers" variant="outline" className="w-full sm:w-auto">
-              I am hiring
+              {c.buttonEmployers}
             </Button>
           </div>
         </Container>
       </Section>
-
     </>
   );
 }

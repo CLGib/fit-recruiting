@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { PageHeader, PortalPage } from "@/components/admin/page-header";
 import TeamMemberForm from "@/components/admin/website/team-forms";
+import PageEditor from "@/components/admin/website/page-editor";
+import { getCopy, getCopyMeta } from "@/lib/site/copy/read";
 import { requireAdmin } from "@/lib/auth/guard";
 import { isAdminPreview } from "@/lib/admin/preview";
 import { listTeam } from "@/lib/site/team";
@@ -43,7 +45,7 @@ function MoveButton({
 
 export default async function TeamAdminPage() {
   await requireAdmin();
-  const team = await listTeam({ includeHidden: true });
+  const [team, copy, meta] = await Promise.all([listTeam({ includeHidden: true }), getCopy(), getCopyMeta()]);
 
   return (
     <PortalPage>
@@ -68,6 +70,10 @@ export default async function TeamAdminPage() {
         </p>
       )}
 
+      <h2 className="eyebrow mb-4">The page</h2>
+      <PageEditor pageKey="team" values={copy.team as Record<string, unknown>} meta={meta} />
+
+      <h2 className="eyebrow mb-4 mt-14">The people</h2>
       <ol className="space-y-4">
         {team.map((m, i) => (
           <li key={m.id} className="rounded-[1.75rem] border border-line-soft bg-canvas-warm/40 p-5 lg:p-6">
@@ -90,7 +96,7 @@ export default async function TeamAdminPage() {
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <h2 className="font-display text-xl font-normal leading-tight text-navy">{m.name}</h2>
+                <h3 className="font-display text-xl font-normal leading-tight text-navy">{m.name}</h3>
                 <p className="mt-0.5 text-sm text-body">
                   {m.title ?? "No title"}
                   {!m.visible && " · hidden from the website"}

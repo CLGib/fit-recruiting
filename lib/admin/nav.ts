@@ -63,15 +63,20 @@ export const PORTAL_NAV: NavSection[] = [
     items: [
       {
         href: "/admin/website",
-        label: "Pages & contact",
+        label: "Pages",
         keywords: [
           "change the phone number",
           "update the address",
           "edit the homepage",
           "change the website",
           "edit copy",
+          "change the wording",
+          "fix a typo",
           "about page",
           "employers page",
+          "interview guide",
+          "privacy policy",
+          "footer",
           "what we recruit for",
           "specialties",
           "email address",
@@ -98,8 +103,12 @@ export const PORTAL_NAV: NavSection[] = [
 /** True when `pathname` is inside (or exactly at) the given nav href. */
 export function isNavItemActive(pathname: string, href: string): boolean {
   if (href === "/admin/website") {
-    // Its own page only; Team sits beneath it in the URL but is its own item.
-    return pathname === "/admin/website";
+    // Every page editor lives under /admin/website/<page>. Team sits beneath it
+    // in the URL too, but is its own item in the sidebar.
+    return (
+      pathname === "/admin/website" ||
+      (pathname.startsWith("/admin/website/") && !pathname.startsWith("/admin/website/team"))
+    );
   }
   if (href === "/admin") {
     // /admin is the résumé list, not a parent of everything under it.

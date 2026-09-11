@@ -1,32 +1,33 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CONTACT } from "@/lib/content";
-import { getContent } from "@/lib/site/content";
-import { phoneHref } from "@/lib/site/schema";
-
-const COLUMNS = [
-  {
-    heading: "Company",
-    links: [
-      { href: "/about", label: "About Fit" },
-      { href: "/employers", label: "For Employers" },
-      { href: "/contact", label: "Contact" },
-    ],
-  },
-  {
-    heading: "Candidates",
-    links: [
-      { href: "/for-candidates", label: "For Candidates" },
-      { href: "/jobs", label: "Browse Open Roles" },
-      { href: "/submit-resume", label: "Submit a Resume" },
-      { href: "/resume-audit", label: "Free Resume Review" },
-      { href: "/resources", label: "Interview Guide" },
-    ],
-  },
-];
+import { getCopy } from "@/lib/site/copy/read";
+import { phoneHref } from "@/lib/site/format";
 
 export default async function SiteFooter() {
-  const contact = await getContent("contact");
+  const { site } = await getCopy();
+
+  // Words from the portal (Site-wide), destinations fixed here.
+  const columns = [
+    {
+      heading: site.footerCompany,
+      links: [
+        { href: "/about", label: site.linkAbout },
+        { href: "/employers", label: site.linkEmployers },
+        { href: "/contact", label: site.linkContact },
+      ],
+    },
+    {
+      heading: site.footerCandidates,
+      links: [
+        { href: "/for-candidates", label: site.linkCandidates },
+        { href: "/jobs", label: site.linkJobs },
+        { href: "/submit-resume", label: site.linkSubmit },
+        { href: "/resume-audit", label: site.linkAudit },
+        { href: "/resources", label: site.linkGuide },
+      ],
+    },
+  ];
+
   return (
     <footer className="on-navy relative overflow-hidden bg-navy text-navy-100">
       <div className="mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-24">
@@ -48,28 +49,21 @@ export default async function SiteFooter() {
               sizes="220px"
               className="h-16 w-auto"
             />
-            <p className="mt-6 max-w-xs text-[0.9375rem] leading-relaxed text-navy-100">
-              A boutique recruiting firm in Mobile, Alabama, placing exceptional
-              people across the Gulf Coast
-              {CONTACT.founded ? ` since ${CONTACT.founded}.` : "."}
-            </p>
+            <p className="mt-6 max-w-xs text-[0.9375rem] leading-relaxed text-navy-100">{site.footerBlurb}</p>
             <p className="mt-6 text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-gold">
-              Local. Trusted. Connected.
+              {site.footerTagline}
             </p>
           </div>
 
-          {COLUMNS.map((col) => (
-            <div key={col.heading}>
+          {columns.map((col, i) => (
+            <div key={i}>
               <h4 className="mb-5 text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-gold">
                 {col.heading}
               </h4>
               <ul className="space-y-3">
                 {col.links.map((l) => (
                   <li key={l.href}>
-                    <Link
-                      href={l.href}
-                      className="text-[0.9375rem] text-navy-100 transition-colors hover:text-gold"
-                    >
+                    <Link href={l.href} className="text-[0.9375rem] text-navy-100 transition-colors hover:text-gold">
                       {l.label}
                     </Link>
                   </li>
@@ -80,24 +74,24 @@ export default async function SiteFooter() {
 
           <div>
             <h4 className="mb-5 text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-gold">
-              Visit Us
+              {site.footerVisit}
             </h4>
             <address className="space-y-3 text-[0.9375rem] not-italic text-navy-100">
               <p>
-                {contact.street}
+                {site.street}
                 <br />
-                {contact.city}
+                {site.city}
               </p>
               {/* Visits are scheduled so a recruiter has read the résumé first. */}
-              <p className="text-navy-100/90">By appointment only</p>
+              <p className="text-navy-100/90">{site.footerAppointment}</p>
               <p>
-                <a href={`tel:${phoneHref(contact.phone)}`} className="transition-colors hover:text-gold">
-                  {contact.phone}
+                <a href={`tel:${phoneHref(site.phone)}`} className="transition-colors hover:text-gold">
+                  {site.phone}
                 </a>
               </p>
               <p>
-                <a href={`mailto:${contact.email}`} className="transition-colors hover:text-gold">
-                  {contact.email}
+                <a href={`mailto:${site.email}`} className="transition-colors hover:text-gold">
+                  {site.email}
                 </a>
               </p>
             </address>
@@ -105,13 +99,15 @@ export default async function SiteFooter() {
         </div>
 
         <div className="mt-16 flex flex-col gap-4 border-t border-white/10 pt-8 text-xs text-navy-100 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Fit Recruiting. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} {site.copyright}
+          </p>
+          {/* A "Client & Candidate Portal" link used to sit here, pointing at
+              /portal/login, which never existed: candidate accounts were never
+              in scope. It was a 404 on every page of the site. */}
           <div className="flex gap-6">
             <Link href="/privacy" className="transition-colors hover:text-gold">
-              Privacy
-            </Link>
-            <Link href="/portal/login" className="transition-colors hover:text-gold">
-              Client &amp; Candidate Portal
+              {site.linkPrivacy}
             </Link>
           </div>
         </div>

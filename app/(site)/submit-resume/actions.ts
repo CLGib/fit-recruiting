@@ -2,6 +2,7 @@
 
 import { RESUME_BUCKET, isSupabaseConfigured } from "@/lib/supabase/config";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { getCopy } from "@/lib/site/copy/read";
 
 export type SubmitState = {
   status: "idle" | "success" | "error";
@@ -161,11 +162,10 @@ export async function submitResume(
       email,
     );
 
-    return {
-      status: "success",
-      message:
-        "Thank you. Your résumé is in, a real person here in Mobile will read it, and we'll reach out when something fits.",
-    };
+    // Read after the résumé is safely stored, and never throws: if Fit's
+    // edited message cannot be loaded, the built-in one is shown instead.
+    const { submit } = await getCopy();
+    return { status: "success", message: submit.success };
   } catch (err) {
     // Log for us, stay useful for them. A dropped application is a lost
     // candidate, so this must never fail silently.
