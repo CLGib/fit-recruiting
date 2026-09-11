@@ -16,7 +16,12 @@ export type Job = {
   salary: string | null;
   /** ISO date, YYYY-MM-DD. */
   postedAt: string;
-  expiresAt: string;
+  /**
+   * Optional. Roles written in the portal have no expiry by design: Fit opens
+   * and closes them by hand, which is the control the client asked for. Only
+   * sources with a real expiry (Bullhorn) set it. Nothing renders it.
+   */
+  expiresAt?: string;
   status: JobStatus;
   /**
    * Long-form fields are OPTIONAL and may be absent. The real descriptions live

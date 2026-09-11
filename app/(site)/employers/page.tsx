@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Button, Container, Section, SectionHeading } from "@/components/ui";
-import { CONTACT, PROCESS, STAFFING_MODELS } from "@/lib/content";
+import { PROCESS, STAFFING_MODELS } from "@/lib/content";
+import { getSiteContent } from "@/lib/site/content";
+import { phoneHref } from "@/lib/site/schema";
 
 export const metadata: Metadata = {
   title: "For Employers",
@@ -17,7 +19,9 @@ const SCREENING = [
   "An in-person interview with Fit",
 ];
 
-export default function EmployersPage() {
+export default async function EmployersPage() {
+  const { employers, contact } = await getSiteContent();
+
   return (
     <>
       <Section className="pt-14 lg:pt-20">
@@ -29,20 +33,16 @@ export default function EmployersPage() {
               <br />
               <em className="italic text-gold-deep">On purpose.</em>
             </h1>
-            <p className="mt-7 text-lg leading-relaxed text-body">
-              You will not get a stack to sort through. You will get a short list
-              of people we have sat down with, screened, and would put our name
-              behind.
-            </p>
+            <p className="mt-7 text-lg leading-relaxed text-body">{employers.intro}</p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
               <Button href="/contact" className="w-full sm:w-auto">
                 Start a search
               </Button>
               <a
-                href={`tel:${CONTACT.phoneRaw}`}
+                href={`tel:${phoneHref(contact.phone)}`}
                 className="inline-flex w-full items-center justify-center rounded-full border border-navy/25 px-7 py-3.5 text-sm font-semibold text-navy transition-all hover:border-navy hover:bg-navy hover:text-canvas sm:w-auto"
               >
-                Call {CONTACT.phone}
+                Call {contact.phone}
               </a>
             </div>
           </div>

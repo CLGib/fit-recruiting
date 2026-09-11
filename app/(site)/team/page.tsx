@@ -1,25 +1,37 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Button, Container, Section } from "@/components/ui";
-import { CONTACT } from "@/lib/content";
-import { TEAM, TEAM_IS_DRAFT, initials, type TeamMember } from "@/lib/team";
+import { getSiteContent } from "@/lib/site/content";
+import { phoneHref } from "@/lib/site/schema";
+import { listTeam, type TeamMemberRecord } from "@/lib/site/team";
+import { initials } from "@/lib/team";
 
-export const metadata: Metadata = {
-  title: "Meet the Team",
-  description:
-    "The people behind Fit Recruiting. Recruiting is relationship driven, so here is who you will actually be talking to.",
-  // Draft entries must never be indexed. Remove once TEAM is complete.
-  robots: TEAM_IS_DRAFT ? { index: false, follow: false } : undefined,
-};
+/**
+ * Meet the Team, managed by Fit in the portal.
+ *
+ * The page stays out of search, and shows a draft notice, until the team flips
+ * "ready to go public" in the portal. Publishing a bio and a headshot is a
+ * consent question, so that switch is theirs rather than something a deploy
+ * turns on.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const { team_page } = await getSiteContent();
+  return {
+    title: "Meet the Team",
+    description:
+      "The people behind Fit Recruiting. Recruiting is relationship driven, so here is who you will actually be talking to.",
+    robots: team_page.published ? undefined : { index: false, follow: false },
+  };
+}
 
-function MemberCard({ m }: { m: TeamMember }) {
+function MemberCard({ m }: { m: TeamMemberRecord }) {
   return (
     <article className="group">
-      {m.photo ? (
+      {m.photo_url ? (
         <div className="overflow-hidden rounded-[2.5rem] bg-canvas-warm">
           <Image
-            src={m.photo}
-            alt={m.photoAlt ?? `${m.name}, Fit Recruiting`}
+            src={m.photo_url}
+            alt={m.photo_alt ?? `${m.name}, Fit Recruiting`}
             width={1000}
             height={1250}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -44,20 +56,7 @@ function MemberCard({ m }: { m: TeamMember }) {
           {m.name}
         </h2>
         {m.title && <p className="mt-1 text-[0.9375rem] text-body">{m.title}</p>}
-
-        {m.specialty && (
-          <p className="mt-4 inline-block rounded-full bg-gold/20 px-3.5 py-1.5 text-xs font-medium text-navy-700">
-            {m.specialty}
-          </p>
-        )}
-
-        {m.bio && <p className="mt-4 leading-relaxed text-body">{m.bio}</p>}
-
-        {m.askMeAbout && (
-          <p className="mt-4 border-l-2 border-gold pl-4 text-[0.9375rem] leading-relaxed text-body">
-            <span className="font-semibold text-navy">Ask me about</span> {m.askMeAbout}
-          </p>
-        )}
+        {m.bio && <p className="mt-4 whitespace-pre-line leading-relaxed text-body">{m.bio}</p>}
 
         {(m.email || m.linkedin) && (
           <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium">
@@ -88,7 +87,9 @@ function MemberCard({ m }: { m: TeamMember }) {
   );
 }
 
-export default function TeamPage() {
+export default async function TeamPage() {
+  const [{ team_page, contact }, team] = await Promise.all([getSiteContent(), listTeam()]);
+
   return (
     <>
       <Section className="pb-0 pt-14 lg:pt-20">
@@ -96,28 +97,22 @@ export default function TeamPage() {
           <div className="max-w-3xl">
             <p className="eyebrow mb-5">Meet the team</p>
             <h1 className="font-display text-[clamp(2.75rem,6.5vw,5rem)] font-light leading-[1.02] tracking-tight text-navy">
-              The people you&rsquo;ll
-              <br />
-              <em className="italic text-gold-deep">actually talk to.</em>
+              The people you&rsquo;ll actually talk to.
             </h1>
             <p className="mt-8 text-xl leading-relaxed text-body">
-              Recruiting runs on relationships, so it helps to know who is on the
-              other end of the phone. We are a small team in Mobile, and you will
-              work with the same person start to finish.
+              We are a small team in Mobile, and you will work with the same
+              person start to finish.
             </p>
           </div>
 
-          {TEAM_IS_DRAFT && (
+          {!team_page.published && (
             <p
               role="status"
               className="mt-10 rounded-2xl border border-dashed border-line bg-canvas-warm/60 px-6 py-5 text-[0.9375rem] leading-relaxed text-body"
             >
-              <span className="font-semibold text-navy">Draft.</span> Names, titles,
-              and LinkedIn links are in place. The bios are first drafts adapted
-              from each person&rsquo;s own LinkedIn and still need her sign-off,
-              Chambliss&rsquo;s title needs confirming, and Lesley&rsquo;s headshot
-              is still to come. This page is hidden from search and not linked in
-              the navigation until all of that is settled.
+              <span className="font-semibold text-navy">Draft.</span> This page
+              is hidden from search and not linked from the navigation until the
+              team marks it ready in the portal.
             </p>
           )}
         </Container>
@@ -126,8 +121,8 @@ export default function TeamPage() {
       <Section>
         <Container>
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-16">
-            {TEAM.map((m) => (
-              <MemberCard key={`${m.name}-${m.photo}`} m={m} />
+            {team.map((m) => (
+              <MemberCard key={m.id} m={m} />
             ))}
           </div>
         </Container>
@@ -135,23 +130,20 @@ export default function TeamPage() {
 
       <Section className="pt-0">
         <Container>
-          <div className="rounded-[2.5rem] bg-navy px-8 py-14 text-center on-navy lg:px-16">
-            <h2 className="mx-auto max-w-2xl font-display text-[clamp(2rem,4vw,3rem)] font-light leading-tight text-canvas">
-              Come talk to one of us.
-            </h2>
-            <p className="mx-auto mt-4 max-w-lg leading-relaxed text-navy-100">
-              We meet by appointment, so give us a call or send your résumé and
-              we&rsquo;ll set a time.
+          <div className="flex flex-col items-start gap-6 rounded-[2.5rem] bg-navy px-8 py-12 on-navy sm:flex-row sm:items-center sm:justify-between lg:px-14">
+            <p className="max-w-lg leading-relaxed text-navy-100">
+              We meet by appointment. Call us or send your résumé and we will set
+              a time.
             </p>
-            <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
               <Button href="/submit-resume" variant="gold" className="w-full sm:w-auto">
                 Submit your résumé
               </Button>
               <a
-                href={`tel:${CONTACT.phoneRaw}`}
+                href={`tel:${phoneHref(contact.phone)}`}
                 className="inline-flex w-full items-center justify-center rounded-full border border-white/25 px-7 py-3.5 text-sm font-semibold text-canvas transition-all hover:border-gold hover:text-gold sm:w-auto"
               >
-                Call {CONTACT.phone}
+                Call {contact.phone}
               </a>
             </div>
           </div>

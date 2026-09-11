@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Button, Container, Section, Arrow } from "@/components/ui";
 import { BRAND_STAMP } from "@/lib/content";
 import { listActiveJobs } from "@/lib/jobs/source";
+import { getContent } from "@/lib/site/content";
 
 export const revalidate = 300;
 
@@ -17,7 +18,7 @@ export const revalidate = 300;
  * /for-candidates and the process lives on /employers, each said once.
  */
 export default async function HomePage() {
-  const jobs = await listActiveJobs();
+  const [jobs, home] = await Promise.all([listActiveJobs(), getContent("home")]);
 
   return (
     <>
@@ -27,16 +28,11 @@ export default async function HomePage() {
             <div className="rise">
               <p className="eyebrow mb-5">Mobile, Alabama · Gulf Coast</p>
               <h1 className="font-display text-[clamp(2.75rem,7.5vw,5.75rem)] font-light leading-[1.06] tracking-tight text-navy sm:leading-[0.98]">
-                The right people,
+                {home.heroTitle}
                 <br />
-                the <em className="italic text-gold-deep">right fit.</em>
+                <em className="italic text-gold-deep">{home.heroTitleAccent}</em>
               </h1>
-              <p className="mt-7 max-w-lg text-lg leading-relaxed text-body">
-                A boutique recruiting firm placing accounting, IT, administrative,
-                and executive talent across Mobile, Baldwin County, and the Gulf
-                Coast. We have met these employers and walked into their offices,
-                which is why our shortlists are short.
-              </p>
+              <p className="mt-7 max-w-lg text-lg leading-relaxed text-body">{home.heroIntro}</p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
                 <Button href="/for-candidates" className="w-full sm:w-auto">
                   I am looking for a job

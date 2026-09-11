@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import ResumeForm from "@/components/resume-form";
 import { Container, Section } from "@/components/ui";
-import { CONTACT } from "@/lib/content";
+import { getContent } from "@/lib/site/content";
+import { phoneHref } from "@/lib/site/schema";
 import { listActiveJobs } from "@/lib/jobs/source";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export default async function SubmitResumePage({
 }: {
   searchParams: Promise<{ role?: string }>;
 }) {
+  const contact = await getContent("contact");
   const { role } = await searchParams;
   const matched = role ? (await listActiveJobs()).find((j) => j.slug === role) : undefined;
 
@@ -68,17 +70,17 @@ export default async function SubmitResumePage({
             <p className="mt-10 text-[0.9375rem] leading-relaxed text-body">
               Rather do it the old-fashioned way? Email{" "}
               <a
-                href={`mailto:${CONTACT.email}`}
+                href={`mailto:${contact.email}`}
                 className="font-medium text-navy underline underline-offset-4 hover:text-gold-deep"
               >
-                {CONTACT.email}
+                {contact.email}
               </a>{" "}
               or call{" "}
               <a
-                href={`tel:${CONTACT.phoneRaw}`}
+                href={`tel:${phoneHref(contact.phone)}`}
                 className="font-medium text-navy underline underline-offset-4 hover:text-gold-deep"
               >
-                {CONTACT.phone}
+                {contact.phone}
               </a>
               .
             </p>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import DisciplineIcon from "@/components/discipline-icon";
 import { Button, Container, Section, SectionHeading } from "@/components/ui";
-import { SPECIALTIES } from "@/lib/content";
+import { getSiteContent } from "@/lib/site/content";
 
 export const metadata: Metadata = {
   title: "About",
@@ -16,7 +16,9 @@ const MARKETS = [
   { place: "Mississippi Gulf Coast", note: "Pascagoula, Moss Point, and across the state line." },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const { about, specialties } = await getSiteContent();
+
   return (
     <>
       <Section className="pb-0 pt-14 lg:pt-20">
@@ -28,13 +30,7 @@ export default function AboutPage() {
               <br />
               <em className="italic text-gold-deep">not by size.</em>
             </h1>
-            <p className="mt-8 text-xl leading-relaxed text-body">
-              Fit Recruiting places accounting, information technology, office
-              administration, and executive talent across the Gulf Coast. Most of
-              what we do is direct hire, full-time roles with real salaries and
-              real career weight. We keep our client list small enough that you
-              always talk to someone who knows your name.
-            </p>
+            <p className="mt-8 text-xl leading-relaxed text-body">{about.intro}</p>
           </div>
         </Container>
       </Section>
@@ -89,14 +85,16 @@ export default function AboutPage() {
             body="Four areas we know well, because knowing a field is the only honest way to judge someone working in it."
           />
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {SPECIALTIES.map((s) => (
+            {specialties.items.map((s, i) => (
               <div
-                key={s.title}
+                key={`${s.title}-${i}`}
                 className="rounded-3xl border border-line-soft bg-canvas-warm/50 p-8"
               >
-                <div className="mb-7 text-navy-700">
-                  <DisciplineIcon title={s.title} />
-                </div>
+                {s.icon !== "none" && (
+                  <div className="mb-7 text-navy-700">
+                    <DisciplineIcon icon={s.icon} />
+                  </div>
+                )}
                 <h3 className="font-display text-2xl font-normal leading-snug text-navy">
                   {s.title}
                 </h3>

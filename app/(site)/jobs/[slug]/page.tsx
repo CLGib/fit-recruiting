@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Arrow, Container, Section } from "@/components/ui";
-import { CONTACT } from "@/lib/content";
+import { getContent } from "@/lib/site/content";
+import { phoneHref } from "@/lib/site/schema";
 import { getJob, listActiveJobs } from "@/lib/jobs/source";
 
 export const revalidate = 300;
@@ -37,6 +38,7 @@ function formatDate(iso: string) {
 }
 
 export default async function JobDetailPage({ params }: Params) {
+  const contact = await getContent("contact");
   const { slug } = await params;
   const job = await getJob(slug);
   if (!job || job.status !== "active") notFound();
@@ -169,10 +171,10 @@ export default async function JobDetailPage({ params }: Params) {
               <p className="mt-8 border-t border-line pt-6 text-sm leading-relaxed text-body">
                 Questions first? Call{" "}
                 <a
-                  href={`tel:${CONTACT.phoneRaw}`}
+                  href={`tel:${phoneHref(contact.phone)}`}
                   className="font-medium text-navy underline underline-offset-4 hover:text-gold-deep"
                 >
-                  {CONTACT.phone}
+                  {contact.phone}
                 </a>
                 .
               </p>

@@ -1,17 +1,23 @@
-import { bullhornJobSource, isBullhornConfigured } from "./bullhorn-source";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { fixtureJobSource } from "./fixture-source";
+import { rolesJobSource } from "./roles-source";
 import type { Job, JobSource } from "./types";
 
 /**
- * Chooses the backing system at runtime.
+ * Where the public job board reads from.
  *
- * Falls back to fixtures whenever Bullhorn is not configured, so the site
- * builds and renders correctly on a machine with no credentials. This is what
- * keeps the Bullhorn decision reversible: swapping the system of record means
- * writing one adapter, not touching any page.
+ * The roles Fit manages in the portal, whenever the database is configured.
+ * Fixtures only on a machine with no credentials, so the site still builds and
+ * renders locally.
+ *
+ * Bullhorn is deliberately NOT a source here any more. It used to switch in
+ * automatically the moment credentials were set, which would have silently
+ * replaced every posting Fit had written with whatever Bullhorn held. Bullhorn
+ * is now a place a role is SENT to from the portal (the publish panel), not a
+ * competing source of truth. One place to edit a posting is the point.
  */
 export function getJobSource(): JobSource {
-  return isBullhornConfigured() ? bullhornJobSource : fixtureJobSource;
+  return isSupabaseConfigured() ? rolesJobSource : fixtureJobSource;
 }
 
 export async function listActiveJobs(): Promise<Job[]> {

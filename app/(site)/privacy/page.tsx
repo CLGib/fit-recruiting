@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Container, Section } from "@/components/ui";
-import { CONTACT } from "@/lib/content";
+import { getContent } from "@/lib/site/content";
+import { phoneHref } from "@/lib/site/schema";
 
 export const metadata: Metadata = {
   title: "Privacy",
@@ -53,7 +54,8 @@ const SECTIONS = [
   },
 ];
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const contact = await getContent("contact");
   return (
     <Section className="pt-14 lg:pt-20">
       <Container>
@@ -90,19 +92,19 @@ export default function PrivacyPage() {
               <p className="mt-4 leading-relaxed text-body">
                 Email{" "}
                 <a
-                  href={`mailto:${CONTACT.email}`}
+                  href={`mailto:${contact.email}`}
                   className="font-medium text-navy underline underline-offset-4 hover:text-gold-deep"
                 >
-                  {CONTACT.email}
+                  {contact.email}
                 </a>{" "}
                 or call{" "}
                 <a
-                  href={`tel:${CONTACT.phoneRaw}`}
+                  href={`tel:${phoneHref(contact.phone)}`}
                   className="font-medium text-navy underline underline-offset-4 hover:text-gold-deep"
                 >
-                  {CONTACT.phone}
+                  {contact.phone}
                 </a>
-                . Our office is at {CONTACT.street}, {CONTACT.city}.
+                . Our office is at {contact.street}, {contact.city}.
               </p>
             </section>
           </div>

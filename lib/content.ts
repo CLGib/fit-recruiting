@@ -22,12 +22,11 @@
  * Job data lives in lib/jobs/, behind a JobSource adapter.
  */
 
+/**
+ * The address, phone and email are editable in the portal now and live in
+ * lib/site/schema.ts (DEFAULTS.contact). What remains here is not editable.
+ */
 export const CONTACT = {
-  street: "2602 Dauphin Street",
-  city: "Mobile, Alabama 36606",
-  phone: "251.300.3584",
-  phoneRaw: "+12513003584",
-  email: "jobs@fitrecruiting.com",
   /** Visits are scheduled so a recruiter has read the résumé beforehand. */
   byAppointment: true,
   // TODO(chambliss): confirm founding year. Nothing is published anywhere, so
@@ -44,34 +43,8 @@ export const CANDIDATE_PROMISE = {
   line: "Working with Fit never costs you a thing.",
 } as const;
 
-/**
- * Functional disciplines Fit recruits for.
- *
- * Engineering was removed at the client's request: they can recruit for it, but
- * it is not an area they would claim as a specialty.
- *
- * TODO(chambliss): several currently-open roles do not map to these four
- * (Inside Sales Representative, Senior Purchasing Manager, Business Operations
- * Analyst). Worth deciding whether Sales and Operations should be listed too.
- */
-export const SPECIALTIES = [
-  {
-    title: "Accounting & Finance",
-    body: "Controllers, staff accountants, AR and AP leadership, and CFOs.",
-  },
-  {
-    title: "Information Technology",
-    body: "Developers, sysadmins, infrastructure leads, and security professionals.",
-  },
-  {
-    title: "Office Administration",
-    body: "Office managers, legal assistants, and executive support.",
-  },
-  {
-    title: "Executive Search",
-    body: "Discreet placement of senior leaders, directors, and C-suite roles.",
-  },
-] as const;
+// The specialties now live in lib/site/schema.ts (DEFAULTS.specialties), where
+// Fit edits them from the portal. Keeping a second copy here would drift.
 
 /**
  * How Fit engages. Direct hire leads deliberately: it is the majority of the

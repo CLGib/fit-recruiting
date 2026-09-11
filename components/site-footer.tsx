@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CONTACT } from "@/lib/content";
+import { getContent } from "@/lib/site/content";
+import { phoneHref } from "@/lib/site/schema";
 
 const COLUMNS = [
   {
@@ -23,7 +25,8 @@ const COLUMNS = [
   },
 ];
 
-export default function SiteFooter() {
+export default async function SiteFooter() {
+  const contact = await getContent("contact");
   return (
     <footer className="on-navy relative overflow-hidden bg-navy text-navy-100">
       <div className="mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-24">
@@ -81,20 +84,20 @@ export default function SiteFooter() {
             </h4>
             <address className="space-y-3 text-[0.9375rem] not-italic text-navy-100">
               <p>
-                {CONTACT.street}
+                {contact.street}
                 <br />
-                {CONTACT.city}
+                {contact.city}
               </p>
               {/* Visits are scheduled so a recruiter has read the résumé first. */}
               <p className="text-navy-100/90">By appointment only</p>
               <p>
-                <a href={`tel:${CONTACT.phoneRaw}`} className="transition-colors hover:text-gold">
-                  {CONTACT.phone}
+                <a href={`tel:${phoneHref(contact.phone)}`} className="transition-colors hover:text-gold">
+                  {contact.phone}
                 </a>
               </p>
               <p>
-                <a href={`mailto:${CONTACT.email}`} className="transition-colors hover:text-gold">
-                  {CONTACT.email}
+                <a href={`mailto:${contact.email}`} className="transition-colors hover:text-gold">
+                  {contact.email}
                 </a>
               </p>
             </address>

@@ -58,10 +58,49 @@ export const PORTAL_NAV: NavSection[] = [
       },
     ],
   },
+  {
+    title: "Website",
+    items: [
+      {
+        href: "/admin/website",
+        label: "Pages & contact",
+        keywords: [
+          "change the phone number",
+          "update the address",
+          "edit the homepage",
+          "change the website",
+          "edit copy",
+          "about page",
+          "employers page",
+          "what we recruit for",
+          "specialties",
+          "email address",
+        ],
+      },
+      {
+        href: "/admin/website/team",
+        label: "Team",
+        keywords: [
+          "add a headshot",
+          "change a photo",
+          "edit a bio",
+          "new hire",
+          "someone left",
+          "hide someone",
+          "meet the team",
+          "reorder the team",
+        ],
+      },
+    ],
+  },
 ];
 
 /** True when `pathname` is inside (or exactly at) the given nav href. */
 export function isNavItemActive(pathname: string, href: string): boolean {
+  if (href === "/admin/website") {
+    // Its own page only; Team sits beneath it in the URL but is its own item.
+    return pathname === "/admin/website";
+  }
   if (href === "/admin") {
     // /admin is the résumé list, not a parent of everything under it.
     return pathname === "/admin" || pathname.startsWith("/admin/submissions");

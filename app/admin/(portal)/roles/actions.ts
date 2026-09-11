@@ -145,8 +145,11 @@ export async function updateRole(
 
   revalidatePath("/admin/roles");
   revalidatePath(`/admin/roles/${id}`);
-  // The public job board reads the same rows.
-  revalidatePath("/jobs");
+  // The public board, the homepage and /for-candidates all list open roles, as
+  // does every job detail page, so a status change has to reach all of them.
+  // The whole site is small enough that invalidating it from the root layout
+  // is cheaper than keeping a list of every page that shows a job.
+  revalidatePath("/", "layout");
   return { status: "idle" };
 }
 

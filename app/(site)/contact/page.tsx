@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Arrow, Container, Section } from "@/components/ui";
-import { CONTACT } from "@/lib/content";
+import { getContent } from "@/lib/site/content";
+import { phoneHref } from "@/lib/site/schema";
 
-export const metadata: Metadata = {
-  title: "Contact",
-  description:
-    "Get in touch with Fit Recruiting at 2602 Dauphin Street, Mobile, Alabama. Call 251.300.3584 or email jobs@fitrecruiting.com. By appointment only.",
-};
+// Built from the editable contact block, so a changed phone number reaches the
+// search snippet as well as the page.
+export async function generateMetadata(): Promise<Metadata> {
+  const contact = await getContent("contact");
+  return {
+    title: "Contact",
+    description: `Get in touch with Fit Recruiting at ${contact.street}, ${contact.city}. Call ${contact.phone} or email ${contact.email}. By appointment only.`,
+  };
+}
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const contact = await getContent("contact");
   return (
     <Section className="pt-14 lg:pt-20">
       <Container>
@@ -37,9 +43,9 @@ export default function ContactPage() {
                 <dt className="eyebrow mb-2">Office · by appointment</dt>
                 <dd className="font-display text-2xl font-light text-navy">
                   <address className="not-italic">
-                    {CONTACT.street}
+                    {contact.street}
                     <br />
-                    {CONTACT.city}
+                    {contact.city}
                   </address>
                 </dd>
               </div>
@@ -47,10 +53,10 @@ export default function ContactPage() {
                 <dt className="eyebrow mb-2">Phone</dt>
                 <dd className="font-display text-2xl font-light">
                   <a
-                    href={`tel:${CONTACT.phoneRaw}`}
+                    href={`tel:${phoneHref(contact.phone)}`}
                     className="text-navy underline-offset-4 transition-colors hover:text-gold-deep hover:underline"
                   >
-                    {CONTACT.phone}
+                    {contact.phone}
                   </a>
                 </dd>
               </div>
@@ -58,10 +64,10 @@ export default function ContactPage() {
                 <dt className="eyebrow mb-2">Email</dt>
                 <dd className="font-display text-2xl font-light">
                   <a
-                    href={`mailto:${CONTACT.email}`}
+                    href={`mailto:${contact.email}`}
                     className="text-navy underline-offset-4 transition-colors hover:text-gold-deep hover:underline"
                   >
-                    {CONTACT.email}
+                    {contact.email}
                   </a>
                 </dd>
               </div>
@@ -90,7 +96,7 @@ export default function ContactPage() {
             </Link>
 
             <a
-              href={`mailto:${CONTACT.email}?subject=New%20job%20order`}
+              href={`mailto:${contact.email}?subject=New%20job%20order`}
               className="group block rounded-[2rem] bg-navy p-9 transition-all hover:-translate-y-1 hover:shadow-lift"
             >
               <p className="mb-4 text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-gold">

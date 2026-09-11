@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   draftDescription,
   updateRole,
@@ -12,6 +12,7 @@ import {
   ROLE_STATUSES,
   ROLE_STATUS_HINT,
   ROLE_STATUS_LABEL,
+  type RoleStatus,
 } from "@/lib/admin/role-status";
 import type { Role } from "@/lib/admin/roles";
 import { Field, GhostButton, Input, PrimaryButton, Select, Textarea } from "./field";
@@ -45,9 +46,47 @@ function DraftButton({ roleId, rewrite }: { roleId: string; rewrite: boolean }) 
   );
 }
 
+/**
+ * The job-posting editor.
+ *
+ * Two bugs lived here when every field was uncontrolled (`defaultValue`):
+ *
+ *  1. React 19 resets uncontrolled inputs when an action finishes, including a
+ *     save that FAILED. A database blip reset the form to the old values and
+ *     wiped the recruiter's edits to the posting.
+ *  2. "Write it for me" saved the draft and re-rendered the page, but a mounted
+ *     uncontrolled textarea ignores a changed defaultValue. The draft looked as
+ *     though it had done nothing, and pressing Save then wrote the stale empty
+ *     fields back over it.
+ *
+ * Controlled inputs fix (1): state survives the reset. Remounting whenever the
+ * server copy changes fixes (2): both saving and drafting bump `updated_at`, so
+ * the key changes exactly when there is newer content to show, and a failed
+ * save (which changes nothing) keeps what the recruiter typed.
+ */
 export default function RoleEditor({ role }: { role: Role }) {
+  return <Editor key={role.updated_at} role={role} />;
+}
+
+function Editor({ role }: { role: Role }) {
+  const [v, setV] = useState({
+    title: role.title,
+    location: role.location,
+    employment_type: role.employment_type as string,
+    salary: role.salary ?? "",
+    categories: role.categories.join(", "),
+    summary: role.summary ?? "",
+    responsibilities: role.responsibilities.join("\n"),
+    requirements: role.requirements.join("\n"),
+    intake_notes: role.intake_notes ?? "",
+    status: role.status as RoleStatus,
+  });
   const [state, action, pending] = useActionState(updateRole, SAVE);
   const written = Boolean(role.summary || role.responsibilities.length);
+  const set =
+    (k: keyof typeof v) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      setV({ ...v, [k]: e.target.value });
 
   return (
     <div className="space-y-10">
@@ -89,15 +128,15 @@ export default function RoleEditor({ role }: { role: Role }) {
         )}
 
         <Field label="Title">
-          <Input name="title" defaultValue={role.title} required />
+          <Input name="title" value={v.title} onChange={set("title")} required />
         </Field>
 
         <div className="grid gap-6 sm:grid-cols-2">
           <Field label="Location">
-            <Input name="location" defaultValue={role.location} required />
+            <Input name="location" value={v.location} onChange={set("location")} required />
           </Field>
           <Field label="Employment type">
-            <Select name="employment_type" defaultValue={role.employment_type}>
+            <Select name="employment_type" value={v.employment_type} onChange={set("employment_type")}>
               {EMPLOYMENT_TYPES.map((t) => (
                 <option key={t} value={t}>
                   {t}
@@ -109,42 +148,46 @@ export default function RoleEditor({ role }: { role: Role }) {
 
         <div className="grid gap-6 sm:grid-cols-2">
           <Field label="Pay">
-            <Input name="salary" defaultValue={role.salary ?? ""} />
+            <Input name="salary" value={v.salary} onChange={set("salary")} />
           </Field>
           <Field label="Industry" hint="Comma separated.">
-            <Input name="categories" defaultValue={role.categories.join(", ")} />
+            <Input name="categories" value={v.categories} onChange={set("categories")} />
           </Field>
         </div>
 
         <Field label="Summary" hint="The first thing a candidate reads.">
-          <Textarea name="summary" rows={4} defaultValue={role.summary ?? ""} />
+          <Textarea name="summary" rows={4} value={v.summary} onChange={set("summary")} />
         </Field>
 
         <Field label="Responsibilities" hint="One per line.">
           <Textarea
             name="responsibilities"
             rows={7}
-            defaultValue={role.responsibilities.join("\n")}
+            value={v.responsibilities}
+            onChange={set("responsibilities")}
           />
         </Field>
 
         <Field
           label="Requirements"
-          hint="One per line. Only what someone genuinely cannot do the job without — a padded list stops good people applying."
+          hint="One per line. Only what someone genuinely cannot do the job without. A padded list stops good people applying."
         >
           <Textarea
             name="requirements"
             rows={6}
-            defaultValue={role.requirements.join("\n")}
+            value={v.requirements}
+            onChange={set("requirements")}
           />
         </Field>
 
         <Field label="Notes from the call" hint="Internal. Never shown on the website.">
-          <Textarea name="intake_notes" rows={5} defaultValue={role.intake_notes ?? ""} />
+          <Textarea name="intake_notes" rows={5} value={v.intake_notes} onChange={set("intake_notes")} />
         </Field>
 
-        <Field label="Status" hint={ROLE_STATUS_HINT[role.status]}>
-          <Select name="status" defaultValue={role.status}>
+        {/* The hint follows the selection, so choosing Open says what Open does
+            before anyone presses Save. */}
+        <Field label="Status" hint={ROLE_STATUS_HINT[v.status]}>
+          <Select name="status" value={v.status} onChange={set("status")}>
             {ROLE_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {ROLE_STATUS_LABEL[s]}

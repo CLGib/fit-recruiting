@@ -1,6 +1,23 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    /**
+     * Team photos uploaded through the portal live in Supabase's public
+     * site-media bucket. Scoped to that one public path rather than the whole
+     * host, so next/image cannot be used to proxy anything else on Supabase,
+     * including the private résumés bucket (which is not under /public/).
+     */
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        port: "",
+        pathname: "/storage/v1/object/public/site-media/**",
+        search: "",
+      },
+    ],
+  },
   experimental: {
     /**
      * Server Actions default to a 1 MB request body, which silently 500s on any
