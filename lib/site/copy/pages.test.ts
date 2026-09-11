@@ -9,7 +9,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { Field } from "./fields.ts";
-import { schemaFor } from "./fields.ts";
+import { isAllowedImageSrc, schemaFor } from "./fields.ts";
 import { PAGE_KEYS, PAGES } from "./index.ts";
 
 test("every field appears in exactly one section", () => {
@@ -64,4 +64,25 @@ test("defaults follow Fit's copy rules", () => {
       }
     }
   }
+});
+
+test("page photos may only come from the site itself or Fit's own uploads", () => {
+  // next/image throws on a host it was not configured for, so a stray address
+  // here takes the whole page down, not just the picture.
+  const allowed = [
+    "/photos/team-02.jpg",
+    "https://abcdefghijkl.supabase.co/storage/v1/object/public/site-media/site/0f8e-41aa.jpg",
+  ];
+  const refused = [
+    "https://example.com/photo.jpg", // someone else's host
+    "http://abcdefghijkl.supabase.co/storage/v1/object/public/site-media/site/x.jpg", // not https
+    "https://abcdefghijkl.supabase.co/storage/v1/object/public/resumes/x/resume.pdf", // the private résumé bucket
+    "https://abcdefghijkl.supabase.co/storage/v1/object/public/site-media/../resumes/x.pdf", // climbing out
+    "/photos/../../etc/passwd",
+    "/brand/fit-lockup.png", // the logo is not a swappable photo
+    "javascript:alert(1)",
+    "",
+  ];
+  for (const src of allowed) assert.ok(isAllowedImageSrc(src), `should allow ${src}`);
+  for (const src of refused) assert.ok(!isAllowedImageSrc(src), `should refuse ${src}`);
 });

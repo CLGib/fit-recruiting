@@ -6,13 +6,27 @@ import { isAdminPreview } from "@/lib/admin/preview";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { isPageKey, pageDef, storageKey, type PageKey } from "@/lib/site/copy";
-import { errorName, readField, schemaFor, type PageDef, type Section } from "@/lib/site/copy/fields";
+import {
+  errorName,
+  imageNames,
+  readField,
+  schemaFor,
+  type ImageValue,
+  type PageDef,
+  type Section,
+} from "@/lib/site/copy/fields";
+import { chosenFile, photoProblem, removePhotos, uploadPhoto } from "@/lib/site/media";
 
 export type SaveState = {
   status: "idle" | "saved" | "error";
   message?: string;
   /** Field-level errors keyed by input name. */
   errors?: Record<string, string>;
+  /**
+   * Photos uploaded by this save, with their new addresses. The editor takes
+   * these back so its next save posts the new address, not the old one.
+   */
+  images?: Record<string, ImageValue>;
 };
 
 const PREVIEW: SaveState = {
@@ -43,12 +57,22 @@ function locate(fd: FormData): { key: PageKey; page: PageDef; section: Section }
   return section ? { key, page, section } : null;
 }
 
+/** The photos a set of stored rows currently point at. */
+async function currentPhotos(keys: string[]): Promise<string[]> {
+  if (!keys.length) return [];
+  const { data } = await createSupabaseAdminClient().from("site_content").select("value").in("key", keys);
+  return (data ?? []).map((r) => (r.value as ImageValue | null)?.src ?? "").filter(Boolean);
+}
+
 /**
  * Save one section of one page.
  *
  * Each field is its own row, so saving a section only ever writes that
  * section's fields. Two people editing different sections of the same page
  * cannot overwrite each other, and nothing is read back and merged first.
+ *
+ * Photos are checked with everything else BEFORE any upload, so a mistake in
+ * another field can never leave an orphaned file in storage.
  */
 export async function saveSection(_prev: SaveState, formData: FormData): Promise<SaveState> {
   // A server action is its own entry point, reachable without the page.
@@ -62,11 +86,19 @@ export async function saveSection(_prev: SaveState, formData: FormData): Promise
   // it means the design preview shows real feedback on a bad value instead of
   // refusing before looking at it. Nothing is written until after both checks.
   const errors: Record<string, string> = {};
-  const now = new Date().toISOString();
-  const rows: { key: string; value: unknown; updated_at: string; updated_by: string }[] = [];
+  const values: Record<string, unknown> = {};
+  const uploads: { field: string; file: File }[] = [];
 
   for (const field of section.keys) {
     const def = page.fields[field];
+    if (def.kind === "image") {
+      const file = chosenFile(formData.get(imageNames(field).file));
+      if (file) {
+        const problem = photoProblem(file);
+        if (problem) errors[field] = problem;
+        else uploads.push({ field, file });
+      }
+    }
     const parsed = schemaFor(def).safeParse(readField(def, field, formData));
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {
@@ -74,7 +106,7 @@ export async function saveSection(_prev: SaveState, formData: FormData): Promise
       }
       continue;
     }
-    rows.push({ key: storageKey(key, field), value: parsed.data, updated_at: now, updated_by: author });
+    values[field] = parsed.data;
   }
 
   if (Object.keys(errors).length) {
@@ -83,22 +115,52 @@ export async function saveSection(_prev: SaveState, formData: FormData): Promise
   if (isAdminPreview()) return PREVIEW;
   if (!isSupabaseConfigured()) return OFFLINE;
 
+  const images: Record<string, ImageValue> = {};
+  const uploaded: string[] = [];
+  let replaced: string[] = [];
+
   try {
+    // What each photo being replaced pointed at, so it can be tidied after.
+    replaced = await currentPhotos(uploads.map((u) => storageKey(key, u.field)));
+
+    for (const { field, file } of uploads) {
+      const src = await uploadPhoto(file, "site");
+      uploaded.push(src);
+      images[field] = { ...(values[field] as ImageValue), src };
+      values[field] = images[field];
+    }
+
+    const now = new Date().toISOString();
     const { error } = await createSupabaseAdminClient()
       .from("site_content")
-      .upsert(rows, { onConflict: "key" });
+      .upsert(
+        Object.entries(values).map(([field, value]) => ({
+          key: storageKey(key, field),
+          value,
+          updated_at: now,
+          updated_by: author,
+        })),
+        { onConflict: "key" },
+      );
     if (error) throw error;
   } catch (err) {
     console.error(`[saveSection:${key}] failed:`, err);
+    // The save did not happen, so nothing points at what was just uploaded.
+    await removePhotos(uploaded);
     return { status: "error", message: "That did not save. Please try again." };
   }
 
+  await removePhotos(replaced);
   publish();
-  return { status: "saved", message: "Saved. It is live on the website now." };
+  return {
+    status: "saved",
+    message: "Saved. It is live on the website now.",
+    ...(uploads.length ? { images } : {}),
+  };
 }
 
 /**
- * Put a section back to the site's original wording.
+ * Put a section back to the site's original wording, and photo.
  *
  * Deletes that section's rows, which is all "original" means: with no row, a
  * field shows its built-in default. The safety net that makes it reasonable to
@@ -111,9 +173,13 @@ export async function resetSection(_prev: SaveState, formData: FormData): Promis
 
   const target = locate(formData);
   if (!target) return { status: "error", message: "Unknown page or section." };
-  const { key, section } = target;
+  const { key, page, section } = target;
 
+  let photos: string[] = [];
   try {
+    photos = await currentPhotos(
+      section.keys.filter((f) => page.fields[f].kind === "image").map((f) => storageKey(key, f)),
+    );
     const { error } = await createSupabaseAdminClient()
       .from("site_content")
       .delete()
@@ -124,6 +190,7 @@ export async function resetSection(_prev: SaveState, formData: FormData): Promis
     return { status: "error", message: "That did not restore. Please try again." };
   }
 
+  await removePhotos(photos);
   publish();
   return { status: "saved", message: "Restored the original wording." };
 }
@@ -132,27 +199,7 @@ export async function resetSection(_prev: SaveState, formData: FormData): Promis
 // Team
 // ---------------------------------------------------------------------------
 
-const PHOTO_TYPES = new Map([
-  ["image/jpeg", "jpg"],
-  ["image/png", "png"],
-  ["image/webp", "webp"],
-]);
-
-/**
- * 4 MB, matching the résumé form. Vercel refuses request bodies over 4.5 MB
- * before this runs, so this keeps the failure inside our own friendly message.
- * NOT exported: a "use server" module may only export async functions.
- */
-const MAX_PHOTO = 4 * 1024 * 1024;
-
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-/** Only ever delete files we uploaded, never a photo shipped with the site. */
-function uploadedPath(url: string | null): string | null {
-  const marker = "/storage/v1/object/public/site-media/";
-  if (!url || !url.includes(marker)) return null;
-  return url.slice(url.indexOf(marker) + marker.length);
-}
 
 export async function saveTeamMember(_prev: SaveState, formData: FormData): Promise<SaveState> {
   const author = await requireAdmin();
@@ -167,7 +214,7 @@ export async function saveTeamMember(_prev: SaveState, formData: FormData): Prom
   const email = str(formData, "email").trim().toLowerCase();
   const photoAlt = str(formData, "photo_alt").trim();
   const visible = formData.get("visible") === "on";
-  const photo = formData.get("photo");
+  const photo = chosenFile(formData.get("photo"));
 
   const errors: Record<string, string> = {};
   if (!name) errors.name = "Every team member needs a name.";
@@ -176,35 +223,22 @@ export async function saveTeamMember(_prev: SaveState, formData: FormData): Prom
     errors.linkedin = "Paste the full LinkedIn address, starting https://www.linkedin.com/";
   }
   if (email && !EMAIL.test(email)) errors.email = "That does not look like an email address.";
-
-  const hasPhoto = photo instanceof File && photo.size > 0;
-  if (hasPhoto) {
-    if (!PHOTO_TYPES.has(photo.type)) errors.photo = "Use a JPG, PNG, or WebP photo.";
-    else if (photo.size > MAX_PHOTO) errors.photo = "That photo is larger than 4 MB. Please use a smaller copy.";
-  }
+  const problem = photo ? photoProblem(photo) : null;
+  if (problem) errors.photo = problem;
   if (Object.keys(errors).length) {
     return { status: "error", message: "Please check the highlighted fields.", errors };
   }
 
   const supabase = createSupabaseAdminClient();
+  let previous: string | null = null;
+  let photoUrl: string | undefined;
 
   try {
-    let previous: string | null = null;
     if (id) {
       const { data } = await supabase.from("team_members").select("photo_url").eq("id", id).maybeSingle();
       previous = (data?.photo_url as string | null) ?? null;
     }
-
-    let photoUrl: string | undefined;
-    if (hasPhoto) {
-      const file = photo as File;
-      const path = `team/${crypto.randomUUID()}.${PHOTO_TYPES.get(file.type)}`;
-      const { error: uploadError } = await supabase.storage
-        .from("site-media")
-        .upload(path, file, { contentType: file.type, upsert: false });
-      if (uploadError) throw uploadError;
-      photoUrl = supabase.storage.from("site-media").getPublicUrl(path).data.publicUrl;
-    }
+    if (photo) photoUrl = await uploadPhoto(photo, "team");
 
     const row = {
       name,
@@ -236,19 +270,14 @@ export async function saveTeamMember(_prev: SaveState, formData: FormData): Prom
         .insert({ ...row, sort_order: ((last?.sort_order as number) ?? 0) + 1 });
       if (error) throw error;
     }
-
-    // Replaced photo: tidy up the old file. Never fails the save, and never
-    // touches a photo that shipped with the site rather than being uploaded.
-    const stale = photoUrl ? uploadedPath(previous) : null;
-    if (stale) {
-      const { error } = await supabase.storage.from("site-media").remove([stale]);
-      if (error) console.error("[saveTeamMember] could not remove old photo:", error);
-    }
   } catch (err) {
     console.error("[saveTeamMember] failed:", err);
+    if (photoUrl) await removePhotos([photoUrl]);
     return { status: "error", message: "That did not save. Please try again." };
   }
 
+  // A replaced headshot is tidied away. Never a photo shipped with the site.
+  if (photoUrl) await removePhotos([previous]);
   publish();
   revalidatePath("/admin/website/team");
   return { status: "saved", message: id ? "Saved. It is live on the website now." : "Added." };

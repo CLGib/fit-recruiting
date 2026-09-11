@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import Image from "next/image";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { resetSection, saveSection, type SaveState } from "@/app/admin/(portal)/website/actions";
 import DisciplineIcon from "@/components/discipline-icon";
 import {
@@ -12,7 +13,15 @@ import {
   Textarea,
 } from "@/components/admin/field";
 import { pageDef, type PageKey } from "@/lib/site/copy";
-import { countName, itemName, type Field, type ItemsField } from "@/lib/site/copy/fields";
+import {
+  countName,
+  imageNames,
+  itemName,
+  type Field,
+  type ImageField,
+  type ImageValue,
+  type ItemsField,
+} from "@/lib/site/copy/fields";
 import { isSpecialtyIcon } from "@/lib/site/copy/icons";
 
 /**
@@ -30,7 +39,7 @@ import { isSpecialtyIcon } from "@/lib/site/copy/icons";
 const IDLE: SaveState = { status: "idle" };
 
 type Row = Record<string, string>;
-type Editable = string | boolean | Row[];
+type Editable = string | boolean | Row[] | ImageValue;
 type Meta = Record<string, { updated_at: string; updated_by: string }>;
 
 /** A stored value, in the shape its input edits: lists become one per line. */
@@ -42,6 +51,8 @@ function toEditable(f: Field, value: unknown): Editable {
       return (value as string[]).join("\n");
     case "items":
       return structuredClone(value as Row[]);
+    case "image":
+      return structuredClone(value as ImageValue);
     default:
       return String(value ?? "");
   }
@@ -93,7 +104,16 @@ function SectionEditor({
   const [v, setV] = useState<Record<string, Editable>>(() =>
     Object.fromEntries(section.keys.map((k) => [k, toEditable(page.fields[k], values[k])])),
   );
-  const [state, action, pending] = useActionState(saveSection, IDLE);
+  const [state, action, pending] = useActionState(async (prev: SaveState, fd: FormData) => {
+    const next = await saveSection(prev, fd);
+    // A new upload has a new address. Without taking it from the server, the
+    // next save would post the old address back and quietly undo the swap.
+    if (next.status === "saved" && next.images) {
+      const images = next.images;
+      setV((cur) => ({ ...cur, ...images }));
+    }
+    return next;
+  }, IDLE);
   const [resetState, resetAction, resetting] = useActionState(
     async (prev: SaveState, fd: FormData) => {
       const next = await resetSection(prev, fd);
@@ -277,7 +297,126 @@ function FieldInput({
       );
     case "items":
       return <ItemsInput name={name} field={f} rows={value as Row[]} errors={errors} onChange={onChange} />;
+    case "image":
+      // Keyed on the address, so a successful swap starts the input fresh.
+      return (
+        <ImageInput
+          key={(value as ImageValue).src}
+          name={name}
+          field={f}
+          value={value as ImageValue}
+          errors={errors}
+          onChange={onChange}
+        />
+      );
   }
+}
+
+/**
+ * A swappable photo: what is there now, a preview of a newly chosen file
+ * before it is saved, and a description for screen readers.
+ *
+ * The file input is uncontrolled (browsers do not allow otherwise), so React
+ * clears it whenever the form's action finishes, including a save that came
+ * back with an error elsewhere. The preview listens for that reset and clears
+ * too, so it never shows a photo that is no longer going to be sent.
+ */
+function ImageInput({
+  name,
+  field: f,
+  value,
+  errors,
+  onChange,
+}: {
+  name: string;
+  field: ImageField;
+  value: ImageValue;
+  errors: Record<string, string>;
+  onChange: (next: Editable) => void;
+}) {
+  const n = imageNames(name);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [chosen, setChosen] = useState<string | null>(null);
+
+  // Free each preview's memory when it is replaced or the input goes away.
+  useEffect(() => () => {
+    if (preview) URL.revokeObjectURL(preview);
+  }, [preview]);
+
+  useEffect(() => {
+    const form = fileRef.current?.form;
+    if (!form) return;
+    const clear = () => {
+      setPreview(null);
+      setChosen(null);
+    };
+    form.addEventListener("reset", clear);
+    return () => form.removeEventListener("reset", clear);
+  }, []);
+
+  return (
+    <fieldset>
+      <legend className="eyebrow mb-2">{f.label}</legend>
+      {f.hint && <p className="mb-3 text-xs leading-relaxed text-body">{f.hint}</p>}
+      <input type="hidden" name={n.src} value={value.src} />
+
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+        <div className="w-40 shrink-0 overflow-hidden rounded-2xl border border-line-soft bg-canvas">
+          {preview ? (
+            // A plain img on purpose: this is a file not yet uploaded, held as a
+            // blob: URL in the browser, which next/image cannot optimise.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={preview} alt="" className="aspect-[4/5] w-full object-cover" />
+          ) : (
+            <Image
+              src={value.src}
+              alt=""
+              width={320}
+              height={400}
+              sizes="160px"
+              className="aspect-[4/5] w-full object-cover"
+            />
+          )}
+        </div>
+
+        <div className="flex-1 space-y-4">
+          <Labelled label="Replace the photo" hint="JPG, PNG or WebP, up to 4 MB." error={errors[name]}>
+            <input
+              ref={fileRef}
+              name={n.file}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                setPreview(file ? URL.createObjectURL(file) : null);
+                setChosen(file?.name ?? null);
+              }}
+              className="w-full rounded-xl border border-line bg-canvas px-4 py-3 text-[0.9375rem] text-navy file:mr-4 file:rounded-full file:border-0 file:bg-navy file:px-4 file:py-1.5 file:text-sm file:font-semibold file:text-canvas hover:file:bg-navy-700"
+            />
+          </Labelled>
+          {chosen && (
+            <p className="text-sm text-body">
+              <span className="font-medium text-navy">{chosen}</span> will replace the current photo when
+              you save.
+            </p>
+          )}
+          <Labelled
+            label="Description"
+            hint="For people using screen readers. Say what is in the photo."
+            error={errors[n.alt]}
+          >
+            <Input
+              name={n.alt}
+              value={value.alt}
+              maxLength={200}
+              onChange={(e) => onChange({ ...value, alt: e.target.value })}
+            />
+          </Labelled>
+        </div>
+      </div>
+    </fieldset>
+  );
 }
 
 function IconButton({ label, d, disabled, onClick }: { label: string; d: string; disabled: boolean; onClick: () => void }) {

@@ -45,6 +45,9 @@ export type LinesField = Base & {
   itemMax?: number;
   rows?: number;
 };
+/** A photo Fit can swap: the file itself, and a description for screen readers. */
+export type ImageValue = { src: string; alt: string };
+export type ImageField = Base & { kind: "image"; default: ImageValue };
 export type ItemField = TextField | LongField | SelectField;
 /** A repeating group, such as process steps or specialties. */
 export type ItemsField<I extends Record<string, ItemField> = Record<string, ItemField>> = Base & {
@@ -56,9 +59,11 @@ export type ItemsField<I extends Record<string, ItemField> = Record<string, Item
   minItems?: number;
   maxItems?: number;
 };
-export type Field = TextField | LongField | SelectField | ToggleField | LinesField | ItemsField;
+export type Field = TextField | LongField | SelectField | ToggleField | LinesField | ItemsField | ImageField;
 
-export type FieldValue<F> = F extends ToggleField
+export type FieldValue<F> = F extends ImageField
+  ? ImageValue
+  : F extends ToggleField
   ? boolean
   : F extends LinesField
     ? string[]
@@ -95,6 +100,12 @@ export const toggle = (label: string, value: boolean, o: Opts<ToggleField> = {})
 export const lines = (label: string, value: string[], o: Opts<LinesField> = {}): LinesField => ({
   ...o,
   kind: "lines",
+  label,
+  default: value,
+});
+export const image = (label: string, value: ImageValue, o: Opts<ImageField> = {}): ImageField => ({
+  ...o,
+  kind: "image",
   label,
   default: value,
 });
@@ -135,6 +146,26 @@ export function definePage<F extends Record<string, Field>>(def: PageDef<F>): Pa
 export type PageCopy<P> = P extends PageDef<infer F> ? { [K in keyof F]: FieldValue<F[K]> } : never;
 
 // ---------------------------------------------------------------------------
+// Images
+// ---------------------------------------------------------------------------
+
+const SHIPPED = /^\/photos\/[A-Za-z0-9._-]+$/;
+const UPLOADED = /^https:\/\/[a-z0-9]+\.supabase\.co\/storage\/v1\/object\/public\/site-media\/[A-Za-z0-9._/-]+$/;
+
+/**
+ * Where a page image may come from: a photo shipped with the site, or one Fit
+ * uploaded to their public site-media storage. Nothing else.
+ *
+ * This is a safety check, not a formality. next/image throws on any host it
+ * has not been configured for, so a stray URL in the database would take the
+ * whole page down rather than just show a broken picture. The editor never
+ * lets anyone type an address, but the server checks anyway.
+ */
+export function isAllowedImageSrc(src: string): boolean {
+  return !src.includes("..") && (SHIPPED.test(src) || UPLOADED.test(src));
+}
+
+// ---------------------------------------------------------------------------
 // Validation
 // ---------------------------------------------------------------------------
 
@@ -160,6 +191,15 @@ export function schemaFor(f: Field): z.ZodType {
       });
     case "toggle":
       return z.boolean();
+    case "image":
+      return z.object({
+        src: z.string().refine(isAllowedImageSrc, "That photo could not be used. Please upload it again."),
+        alt: z
+          .string()
+          .trim()
+          .min(1, "Describe the photo in a few words, for people using screen readers.")
+          .max(200, tooLong(200)),
+      });
     case "lines": {
       const max = f.itemMax ?? 400;
       return z
@@ -192,6 +232,12 @@ export function defaultsOf<F extends Record<string, Field>>(page: PageDef<F>): P
 // ---------------------------------------------------------------------------
 
 export const countName = (field: string) => `${field}__count`;
+/** An image field posts its current source, its description, and maybe a new file. */
+export const imageNames = (field: string) => ({
+  src: `${field}__src`,
+  alt: `${field}__alt`,
+  file: `${field}__file`,
+});
 export const itemName = (field: string, i: number, sub: string) => `${field}__${i}__${sub}`;
 
 type FormLike = { get(name: string): FormDataEntryValue | null };
@@ -206,6 +252,12 @@ export function readField(f: Field, name: string, fd: FormLike): unknown {
       return str(fd, name);
     case "toggle":
       return fd.get(name) === "on";
+    case "image": {
+      // Only the current source and description. A newly chosen file is
+      // handled by the save action, which uploads it and swaps in the result.
+      const n = imageNames(name);
+      return { src: str(fd, n.src), alt: str(fd, n.alt).trim() };
+    }
     case "lines":
       return str(fd, name)
         .split("\n")
@@ -233,5 +285,7 @@ export function errorName(field: string, path: readonly PropertyKey[]): string {
   if (typeof path[0] === "number" && typeof path[1] === "string") {
     return itemName(field, path[0], path[1]);
   }
+  // An image's description error belongs under its description input.
+  if (path[0] === "alt") return imageNames(field).alt;
   return field;
 }

@@ -36,8 +36,8 @@ export default async function AboutPage() {
         <Container>
           <div className="overflow-hidden rounded-[2.5rem]">
             <Image
-              src="/photos/team-02.jpg"
-              alt="The owner of Fit Recruiting at the firm's Mobile office"
+              src={c.bannerImage.src}
+              alt={c.bannerImage.alt}
               width={2000}
               height={1125}
               sizes="(max-width: 1240px) 100vw, 1180px"

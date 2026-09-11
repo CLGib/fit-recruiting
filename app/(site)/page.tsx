@@ -40,8 +40,8 @@ export default async function HomePage() {
             <div className="rise relative" style={{ animationDelay: "120ms" }}>
               <div className="relative aspect-[4/5] overflow-hidden rounded-[2.75rem] bg-canvas-warm">
                 <Image
-                  src="/photos/team-02.jpg"
-                  alt="The owner of Fit Recruiting at the firm's Mobile, Alabama office"
+                  src={c.heroImage.src}
+                  alt={c.heroImage.alt}
                   fill
                   priority
                   sizes="(max-width: 1024px) 100vw, 46vw"

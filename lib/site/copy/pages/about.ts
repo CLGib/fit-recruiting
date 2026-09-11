@@ -1,4 +1,4 @@
-import { definePage, items, long, select, text } from "../fields.ts";
+import { definePage, image, items, long, select, text } from "../fields.ts";
 import { SPECIALTY_ICON_OPTIONS } from "../icons.ts";
 
 export const about = definePage({
@@ -13,6 +13,12 @@ export const about = definePage({
       "Introduction",
       "Fit Recruiting places accounting, information technology, office administration, and executive talent across the Gulf Coast. Most of what we do is direct hire, full-time roles with real salaries and real career weight. We keep our client list small enough that you always talk to someone who knows your name.",
       { max: 800, rows: 5 },
+    ),
+
+    bannerImage: image(
+      "Photo",
+      { src: "/photos/team-02.jpg", alt: "The owner of Fit Recruiting at the firm's Mobile office" },
+      { hint: "Shown wide, across the page, so a landscape photo works best." },
     ),
 
     marketsEyebrow: text("Small line above the heading", "Why Fit", { max: 60 }),
@@ -63,6 +69,7 @@ export const about = definePage({
   },
   sections: [
     { title: "Top of the page", keys: ["eyebrow", "title", "titleAccent", "intro"] },
+    { title: "Photo", keys: ["bannerImage"] },
     { title: "Where we work", keys: ["marketsEyebrow", "marketsTitle", "marketsBody", "markets"] },
     { title: "What we recruit for", keys: ["specialtiesEyebrow", "specialtiesTitle", "specialtiesBody", "specialties"] },
     { title: "Closing buttons", keys: ["buttonCandidates", "buttonEmployers"] },

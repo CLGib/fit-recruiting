@@ -1,4 +1,4 @@
-import { definePage, items, lines, long, text } from "../fields.ts";
+import { definePage, image, items, lines, long, text } from "../fields.ts";
 
 export const home = definePage({
   label: "Homepage",
@@ -15,6 +15,11 @@ export const home = definePage({
     ),
     heroButtonCandidates: text("Job seeker button", "I am looking for a job", { max: 40 }),
     heroButtonEmployers: text("Employer button", "I am hiring", { max: 40 }),
+    heroImage: image(
+      "Photo",
+      { src: "/photos/team-02.jpg", alt: "The owner of Fit Recruiting at the firm's Mobile, Alabama office" },
+      { hint: "Shown tall, beside the headline, so a portrait photo works best." },
+    ),
 
     jobsHeading: text("Heading", "Open this week", { max: 60 }),
     jobsLink: text("Link to all roles", "Search all {count} openings", {
@@ -64,6 +69,7 @@ export const home = definePage({
       title: "Top of the page",
       keys: ["heroEyebrow", "heroTitle", "heroTitleAccent", "heroIntro", "heroButtonCandidates", "heroButtonEmployers"],
     },
+    { title: "Photo beside the headline", keys: ["heroImage"] },
     {
       title: "Open roles",
       hint: "The roles themselves come from Roles in the portal. These are the words around them.",
