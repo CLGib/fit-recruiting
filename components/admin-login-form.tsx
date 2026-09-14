@@ -1,20 +1,26 @@
 "use client";
 
-import { useActionState, useId } from "react";
+import { useActionState, useId, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
   requestLoginLink,
+  signInWithPassword,
   verifyLoginCode,
   type LoginState,
+  type PasswordState,
   type VerifyState,
 } from "@/app/admin/actions";
 import { Arrow } from "@/components/ui";
 
 const INITIAL: LoginState = { status: "idle" };
 const VERIFY_INITIAL: VerifyState = { status: "idle" };
+const PASSWORD_INITIAL: PasswordState = { status: "idle" };
 
 const FIELD =
   "w-full rounded-2xl border border-line bg-canvas px-5 py-4 text-[0.9375rem] text-navy placeholder:text-body focus:border-navy focus:outline-none";
+
+const SWITCH =
+  "text-sm font-medium text-navy underline underline-offset-4 transition-colors hover:text-gold-deep";
 
 function Submit({ idle, busy }: { idle: string; busy: string }) {
   const { pending } = useFormStatus();
@@ -42,12 +48,62 @@ function Err({ message }: { message?: string }) {
   );
 }
 
+/**
+ * Password first, emailed code second.
+ *
+ * Password leads while Fit's sign-in emails cannot be delivered (Supabase only
+ * sends auth email to its own team members until custom SMTP is set up). The
+ * code flow is kept intact so it works again the moment email does.
+ */
 export default function AdminLoginForm() {
+  const [mode, setMode] = useState<"password" | "code">("password");
   const [sendState, sendAction] = useActionState(requestLoginLink, INITIAL);
   const [verifyState, verifyAction] = useActionState(verifyLoginCode, VERIFY_INITIAL);
+  const [passwordState, passwordAction] = useActionState(signInWithPassword, PASSWORD_INITIAL);
   const uid = useId();
 
-  // Step two: the code has been emailed, now verify it.
+  if (mode === "password") {
+    return (
+      <form action={passwordAction} className="space-y-5">
+        <Err message={passwordState.message} />
+        <div>
+          <label htmlFor={`${uid}-pw-email`} className="eyebrow mb-3 block">
+            Work email
+          </label>
+          <input
+            id={`${uid}-pw-email`}
+            name="email"
+            type="email"
+            autoComplete="username"
+            required
+            className={FIELD}
+          />
+        </div>
+        <div>
+          <label htmlFor={`${uid}-password`} className="eyebrow mb-3 block">
+            Password
+          </label>
+          <input
+            id={`${uid}-password`}
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            className={FIELD}
+          />
+        </div>
+        <Submit idle="Sign in" busy="Signing in…" />
+        <p className="text-sm leading-relaxed text-body">
+          No password yet?{" "}
+          <button type="button" onClick={() => setMode("code")} className={SWITCH}>
+            Email me a sign-in code instead
+          </button>
+        </p>
+      </form>
+    );
+  }
+
+  // Code, step two: the code has been emailed, now verify it.
   if (sendState.status === "sent" && sendState.email) {
     return (
       <form action={verifyAction} className="space-y-5">
@@ -86,7 +142,7 @@ export default function AdminLoginForm() {
     );
   }
 
-  // Step one: ask for the address.
+  // Code, step one: ask for the address.
   return (
     <form action={sendAction} className="space-y-5">
       <Err message={sendState.status === "error" ? sendState.message : undefined} />
@@ -105,7 +161,10 @@ export default function AdminLoginForm() {
       </div>
       <Submit idle="Email me a code" busy="Sending…" />
       <p className="text-sm leading-relaxed text-body">
-        No passwords. We email you a code that expires in an hour.
+        We email you a code that expires in an hour.{" "}
+        <button type="button" onClick={() => setMode("password")} className={SWITCH}>
+          Sign in with a password instead
+        </button>
       </p>
     </form>
   );

@@ -12,6 +12,7 @@ export type LoginState = {
 };
 
 export type VerifyState = { status: "idle" | "error"; message?: string };
+export type PasswordState = { status: "idle" | "error"; message?: string };
 
 /**
  * Magic-link sign in.
@@ -74,6 +75,64 @@ export async function requestLoginLink(
   }
 
   return sent;
+}
+
+/**
+ * Password sign in, added while Fit's sign-in emails cannot be delivered.
+ *
+ * Without custom SMTP, Supabase only sends auth email to members of the
+ * Supabase team, so an emailed code never reaches anyone at Fit. A password
+ * needs no email at all. Passwords are set per person with
+ * `npm run admin:password -- <email>`; nobody signs themselves up.
+ *
+ * The allowlist is still enforced, before Supabase is even asked and again on
+ * the signed-in user, and every failure gets the same message, so the form
+ * cannot be used to learn which addresses have access. The password itself is
+ * never logged.
+ */
+export async function signInWithPassword(
+  _prev: PasswordState,
+  formData: FormData,
+): Promise<PasswordState> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+  const invalid: PasswordState = {
+    status: "error",
+    message: "That email and password don't match.",
+  };
+
+  if (!email || !password) {
+    return { status: "error", message: "Enter your email and password." };
+  }
+  if (!isAdminConfigured()) {
+    return {
+      status: "error",
+      message: "Admin access is not configured yet. Set ADMIN_ALLOWED_EMAILS.",
+    };
+  }
+  if (!isAllowedEmail(email)) {
+    console.warn(`[signInWithPassword] rejected, not in allowlist: ${email}`);
+    return invalid;
+  }
+
+  try {
+    const supabase = await createSupabaseAuthClient();
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data.user) {
+      console.warn(`[signInWithPassword] failed for ${email}: ${error?.message ?? "no user"}`);
+      return invalid;
+    }
+    if (!isAllowedEmail(data.user.email)) {
+      await supabase.auth.signOut();
+      return invalid;
+    }
+  } catch (err) {
+    console.error("[signInWithPassword] failed:", err);
+    return { status: "error", message: "We couldn't sign you in. Please try again in a moment." };
+  }
+
+  // Outside the try: redirect() signals by throwing, and must not be caught.
+  redirect("/admin");
 }
 
 export async function signOut() {

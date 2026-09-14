@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "admin:code": "node --env-file=.env.local scripts/admin-code.mjs",
-    "test": "node --test 'lib/**/*.test.ts'"
+    "test": "node --test 'lib/**/*.test.ts'",
+    "admin:password": "node --env-file=.env.local scripts/admin-password.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",
