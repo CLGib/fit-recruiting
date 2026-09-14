@@ -30,7 +30,7 @@ export async function requestLoginLink(
     status: "sent",
     email,
     message:
-      "If that address has access, a six-digit code is on its way. It expires in an hour.",
+      "If that address has access, a sign-in code is on its way. It expires in an hour.",
   };
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
@@ -84,7 +84,7 @@ export async function signOut() {
 
 
 /**
- * Step two: verify the emailed six-digit code.
+ * Step two: verify the emailed code.
  *
  * Preferred over clicking the magic link. A code cannot be consumed by a
  * corporate email scanner pre-fetching URLs, and it does not depend on the
@@ -98,8 +98,10 @@ export async function verifyLoginCode(
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const token = String(formData.get("token") ?? "").replace(/\s/g, "");
 
-  if (!/^\d{6}$/.test(token)) {
-    return { status: "error", message: "Enter the six-digit code from your email." };
+  // Supabase's code length is a project setting (6 to 10 digits), and this
+  // project sends 8. Hardcoding 6 rejected every real code as invalid.
+  if (!/^\d{6,10}$/.test(token)) {
+    return { status: "error", message: "Enter the code from your email." };
   }
   // Re-check: the address could have been removed since the code was sent.
   if (!isAllowedEmail(email)) {

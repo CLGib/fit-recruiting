@@ -61,7 +61,7 @@ export default function AdminLoginForm() {
         <input type="hidden" name="email" value={sendState.email} />
         <div>
           <label htmlFor={`${uid}-token`} className="eyebrow mb-3 block">
-            Six-digit code
+            Sign-in code
           </label>
           <input
             id={`${uid}-token`}
@@ -70,10 +70,10 @@ export default function AdminLoginForm() {
             inputMode="numeric"
             autoComplete="one-time-code"
             pattern="[0-9]*"
-            maxLength={6}
+            maxLength={10}
             required
             autoFocus
-            placeholder="000000"
+            placeholder="00000000"
             className={`${FIELD} text-center font-mono text-2xl tracking-[0.4em]`}
           />
         </div>
@@ -105,7 +105,7 @@ export default function AdminLoginForm() {
       </div>
       <Submit idle="Email me a code" busy="Sending…" />
       <p className="text-sm leading-relaxed text-body">
-        No passwords. We email you a six-digit code that expires in an hour.
+        No passwords. We email you a code that expires in an hour.
       </p>
     </form>
   );
