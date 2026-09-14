@@ -170,6 +170,26 @@ export default function ResumeForm({ role }: { role?: string }) {
       </div>
 
       <div>
+        <label htmlFor={`${uid}-linkedin`} className="eyebrow mb-3 block">
+          LinkedIn profile
+        </label>
+        <input
+          id={`${uid}-linkedin`}
+          name="linkedin"
+          // type="text", not "url": the browser's url check would refuse
+          // "linkedin.com/in/name" without https, which the server accepts.
+          type="text"
+          inputMode="url"
+          autoComplete="url"
+          placeholder="linkedin.com/in/yourname"
+          aria-invalid={Boolean(errors.linkedin)}
+          aria-describedby={errors.linkedin ? `${uid}-linkedin-err` : undefined}
+          className={FIELD}
+        />
+        <FieldError id={`${uid}-linkedin-err`} message={errors.linkedin} />
+      </div>
+
+      <div>
         <label htmlFor={`${uid}-resume`} className="eyebrow mb-3 block">
           Résumé <span className="text-gold-deep">*</span>
         </label>

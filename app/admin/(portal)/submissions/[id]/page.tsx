@@ -224,6 +224,24 @@ export default async function SubmissionPage({
                     </dd>
                   </div>
                 )}
+                {/* Checked before linking out: the address was typed by a
+                    candidate, so only a real https address becomes a link. */}
+                {submission.linkedin?.startsWith("https://") && (
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-body">LinkedIn</dt>
+                    <dd>
+                      <a
+                        href={submission.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-navy underline underline-offset-4 hover:text-gold-deep"
+                      >
+                        View profile
+                        <span className="sr-only">, opens in a new tab</span>
+                      </a>
+                    </dd>
+                  </div>
+                )}
                 <div className="flex justify-between gap-4">
                   <dt className="text-body">Stage</dt>
                   <dd className="text-navy">{STATUS_LABEL[submission.status]}</dd>

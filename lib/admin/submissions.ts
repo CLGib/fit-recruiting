@@ -15,6 +15,7 @@ export type Submission = {
   last_name: string;
   email: string;
   phone: string | null;
+  linkedin: string | null;
   role_slug: string | null;
   message: string | null;
   resume_path: string | null;
