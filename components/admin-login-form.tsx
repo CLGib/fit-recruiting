@@ -4,17 +4,17 @@ import { useActionState, useId, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
   requestLoginLink,
-  signInWithPassword,
+  signInWithPin,
   verifyLoginCode,
   type LoginState,
-  type PasswordState,
+  type PinState,
   type VerifyState,
 } from "@/app/admin/actions";
 import { Arrow } from "@/components/ui";
 
 const INITIAL: LoginState = { status: "idle" };
 const VERIFY_INITIAL: VerifyState = { status: "idle" };
-const PASSWORD_INITIAL: PasswordState = { status: "idle" };
+const PIN_INITIAL: PinState = { status: "idle" };
 
 const FIELD =
   "w-full rounded-2xl border border-line bg-canvas px-5 py-4 text-[0.9375rem] text-navy placeholder:text-body focus:border-navy focus:outline-none";
@@ -49,29 +49,29 @@ function Err({ message }: { message?: string }) {
 }
 
 /**
- * Password first, emailed code second.
+ * Email and PIN while the test PIN is on; emailed code otherwise.
  *
- * Password leads while Fit's sign-in emails cannot be delivered (Supabase only
- * sends auth email to its own team members until custom SMTP is set up). The
- * code flow is kept intact so it works again the moment email does.
+ * The code flow is kept intact so it works again the moment Fit's sign-in
+ * email is set up, and the PIN option disappears on its own once
+ * ADMIN_TEST_PIN is removed.
  */
-export default function AdminLoginForm() {
-  const [mode, setMode] = useState<"password" | "code">("password");
+export default function AdminLoginForm({ pinEnabled }: { pinEnabled: boolean }) {
+  const [mode, setMode] = useState<"pin" | "code">(pinEnabled ? "pin" : "code");
   const [sendState, sendAction] = useActionState(requestLoginLink, INITIAL);
   const [verifyState, verifyAction] = useActionState(verifyLoginCode, VERIFY_INITIAL);
-  const [passwordState, passwordAction] = useActionState(signInWithPassword, PASSWORD_INITIAL);
+  const [pinState, pinAction] = useActionState(signInWithPin, PIN_INITIAL);
   const uid = useId();
 
-  if (mode === "password") {
+  if (mode === "pin" && pinEnabled) {
     return (
-      <form action={passwordAction} className="space-y-5">
-        <Err message={passwordState.message} />
+      <form action={pinAction} className="space-y-5">
+        <Err message={pinState.message} />
         <div>
-          <label htmlFor={`${uid}-pw-email`} className="eyebrow mb-3 block">
+          <label htmlFor={`${uid}-pin-email`} className="eyebrow mb-3 block">
             Work email
           </label>
           <input
-            id={`${uid}-pw-email`}
+            id={`${uid}-pin-email`}
             name="email"
             type="email"
             autoComplete="username"
@@ -80,12 +80,12 @@ export default function AdminLoginForm() {
           />
         </div>
         <div>
-          <label htmlFor={`${uid}-password`} className="eyebrow mb-3 block">
-            Password
+          <label htmlFor={`${uid}-pin`} className="eyebrow mb-3 block">
+            PIN
           </label>
           <input
-            id={`${uid}-password`}
-            name="password"
+            id={`${uid}-pin`}
+            name="pin"
             type="password"
             autoComplete="current-password"
             required
@@ -94,7 +94,7 @@ export default function AdminLoginForm() {
         </div>
         <Submit idle="Sign in" busy="Signing in…" />
         <p className="text-sm leading-relaxed text-body">
-          No password yet?{" "}
+          No PIN?{" "}
           <button type="button" onClick={() => setMode("code")} className={SWITCH}>
             Email me a sign-in code instead
           </button>
@@ -161,10 +161,15 @@ export default function AdminLoginForm() {
       </div>
       <Submit idle="Email me a code" busy="Sending…" />
       <p className="text-sm leading-relaxed text-body">
-        We email you a code that expires in an hour.{" "}
-        <button type="button" onClick={() => setMode("password")} className={SWITCH}>
-          Sign in with a password instead
-        </button>
+        We email you a code that expires in an hour.
+        {pinEnabled && (
+          <>
+            {" "}
+            <button type="button" onClick={() => setMode("pin")} className={SWITCH}>
+              Sign in with your PIN instead
+            </button>
+          </>
+        )}
       </p>
     </form>
   );

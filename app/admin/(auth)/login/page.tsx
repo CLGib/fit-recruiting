@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AdminLoginForm from "@/components/admin-login-form";
+import { isPinEnabled } from "@/lib/auth/pin";
 import { Container, Section } from "@/components/ui";
 
 export const metadata: Metadata = {
@@ -39,7 +40,7 @@ export default async function AdminLoginPage({
           )}
 
           <div className="mt-9">
-            <AdminLoginForm />
+            <AdminLoginForm pinEnabled={isPinEnabled()} />
           </div>
         </div>
       </Container>

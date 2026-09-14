@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { isAllowedEmail, isAdminConfigured } from "@/lib/auth/access";
+import { clearPinSession, createPinSession, isPinEnabled, pinMatches } from "@/lib/auth/pin";
 import { createSupabaseAuthClient } from "@/lib/supabase/auth-client";
 
 export type LoginState = {
@@ -12,7 +13,7 @@ export type LoginState = {
 };
 
 export type VerifyState = { status: "idle" | "error"; message?: string };
-export type PasswordState = { status: "idle" | "error"; message?: string };
+export type PinState = { status: "idle" | "error"; message?: string };
 
 /**
  * Magic-link sign in.
@@ -78,69 +79,47 @@ export async function requestLoginLink(
 }
 
 /**
- * Password sign in, added while Fit's sign-in emails cannot be delivered.
+ * Sign in with the temporary test PIN. See lib/auth/pin.ts for why it exists
+ * and how it is switched off.
  *
- * Without custom SMTP, Supabase only sends auth email to members of the
- * Supabase team, so an emailed code never reaches anyone at Fit. A password
- * needs no email at all. Passwords are set per person with
- * `npm run admin:password -- <email>`; nobody signs themselves up.
- *
- * The allowlist is still enforced, before Supabase is even asked and again on
- * the signed-in user, and every failure gets the same message, so the form
- * cannot be used to learn which addresses have access. The password itself is
- * never logged.
+ * The allowlist still applies. Every failure gets the same message, so the
+ * form cannot be used to learn which addresses have access, and a short pause
+ * after each wrong attempt makes guessing a short PIN slow. The PIN is never
+ * logged.
  */
-export async function signInWithPassword(
-  _prev: PasswordState,
-  formData: FormData,
-): Promise<PasswordState> {
+export async function signInWithPin(_prev: PinState, formData: FormData): Promise<PinState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const password = String(formData.get("password") ?? "");
-  const invalid: PasswordState = {
-    status: "error",
-    message: "That email and password don't match.",
-  };
+  const pin = String(formData.get("pin") ?? "");
 
-  if (!email || !password) {
-    return { status: "error", message: "Enter your email and password." };
+  if (!isPinEnabled()) {
+    return { status: "error", message: "PIN sign-in is turned off. Use an emailed code instead." };
   }
-  if (!isAdminConfigured()) {
-    return {
-      status: "error",
-      message: "Admin access is not configured yet. Set ADMIN_ALLOWED_EMAILS.",
-    };
+  if (!email || !pin) {
+    return { status: "error", message: "Enter your email and PIN." };
   }
-  if (!isAllowedEmail(email)) {
-    console.warn(`[signInWithPassword] rejected, not in allowlist: ${email}`);
-    return invalid;
+  if (!isAllowedEmail(email) || !pinMatches(pin)) {
+    console.warn(`[signInWithPin] failed for ${email}`);
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    return { status: "error", message: "That email and PIN don't match." };
   }
 
-  try {
-    const supabase = await createSupabaseAuthClient();
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error || !data.user) {
-      console.warn(`[signInWithPassword] failed for ${email}: ${error?.message ?? "no user"}`);
-      return invalid;
-    }
-    if (!isAllowedEmail(data.user.email)) {
-      await supabase.auth.signOut();
-      return invalid;
-    }
-  } catch (err) {
-    console.error("[signInWithPassword] failed:", err);
-    return { status: "error", message: "We couldn't sign you in. Please try again in a moment." };
-  }
-
-  // Outside the try: redirect() signals by throwing, and must not be caught.
+  await createPinSession(email);
+  console.info(`[signInWithPin] signed in: ${email}`);
+  // Outside any try: redirect() signals by throwing, and must not be caught.
   redirect("/admin");
 }
 
 export async function signOut() {
-  const supabase = await createSupabaseAuthClient();
-  await supabase.auth.signOut();
+  // The PIN session first: it needs nothing external, so it always clears.
+  await clearPinSession();
+  try {
+    const supabase = await createSupabaseAuthClient();
+    await supabase.auth.signOut();
+  } catch (err) {
+    console.error("[signOut] Supabase sign-out failed:", err);
+  }
   redirect("/admin/login");
 }
-
 
 /**
  * Step two: verify the emailed code.
