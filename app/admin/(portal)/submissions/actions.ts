@@ -164,7 +164,8 @@ export async function matchToRoles(
   }
 
   const { getSubmission, resumeBase64, rolesHash } = await import("@/lib/admin/submissions");
-  const { listOpenRoles } = await import("@/lib/admin/roles");
+  // The job board's source: Bullhorn once connected, current roles until then.
+  const { listActiveJobs } = await import("@/lib/jobs/source");
   const { isAnalyzable } = await import("@/lib/ai/resume-analysis");
   const { matchResumeToRoles } = await import("@/lib/ai/role-match");
 
@@ -174,7 +175,13 @@ export async function matchToRoles(
     return { status: "error", message: "Matching reads PDFs only." };
   }
 
-  const roles = await listOpenRoles();
+  let roles;
+  try {
+    roles = await listActiveJobs();
+  } catch (err) {
+    console.error("[matchToRoles] could not load open roles:", err);
+    return { status: "error", message: "The open roles could not be loaded. Please try again later." };
+  }
   if (roles.length === 0) {
     return { status: "error", message: "There are no open roles to match against yet." };
   }
@@ -189,8 +196,8 @@ export async function matchToRoles(
         slug: r.slug,
         title: r.title,
         location: r.location,
-        summary: r.summary,
-        requirements: r.requirements,
+        summary: r.summary ?? null,
+        requirements: r.requirements ?? [],
       })),
     );
 

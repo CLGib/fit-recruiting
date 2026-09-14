@@ -1,4 +1,5 @@
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { bullhornJobSource, isBullhornConfigured } from "./bullhorn-source";
 import { fixtureJobSource } from "./fixture-source";
 import { rolesJobSource } from "./roles-source";
 import type { Job, JobSource } from "./types";
@@ -6,17 +7,20 @@ import type { Job, JobSource } from "./types";
 /**
  * Where the public job board reads from.
  *
- * The roles Fit manages in the portal, whenever the database is configured.
- * Fixtures only on a machine with no credentials, so the site still builds and
- * renders locally.
+ * BULLHORN FIRST, per Fit (2026-09-14): Fit posts jobs in Bullhorn, where their
+ * team already works, and the website reflects it. They do not want to manage
+ * postings in the portal. So whenever Bullhorn credentials are configured, the
+ * board is Bullhorn and nothing else.
  *
- * Bullhorn is deliberately NOT a source here any more. It used to switch in
- * automatically the moment credentials were set, which would have silently
- * replaced every posting Fit had written with whatever Bullhorn held. Bullhorn
- * is now a place a role is SENT to from the portal (the publish panel), not a
- * competing source of truth. One place to edit a posting is the point.
+ * Until then, the roles in the portal fill in, so the site is never empty while
+ * API access is pending. Fixtures only on a machine with no database at all.
+ *
+ * CAUTION: the Bullhorn adapter has never run against a real account. Setting
+ * the credentials in Production switches the live board over immediately, so
+ * add them to a Preview deployment first and check the board matches Bullhorn.
  */
 export function getJobSource(): JobSource {
+  if (isBullhornConfigured()) return bullhornJobSource;
   return isSupabaseConfigured() ? rolesJobSource : fixtureJobSource;
 }
 

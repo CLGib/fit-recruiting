@@ -41,19 +41,34 @@ export const PORTAL_NAV: NavSection[] = [
     ],
   },
   {
-    title: "Roles",
+    // Christina's label (2026-09-14). Jobs themselves live in Bullhorn, so the
+    // portal offers tools that work alongside it rather than a second place to
+    // manage postings.
+    title: "API-friendly tools",
     items: [
       {
-        href: "/admin/roles",
-        label: "Roles",
+        href: "/admin/tools/resume-reviewer",
+        label: "Résumé reviewer",
         keywords: [
-          "job posting",
-          "post a job",
+          "review a resume",
+          "upload a resume",
+          "summarize a resume",
+          "what roles fit",
+          "match to open roles",
+          "briefing",
+          "questions to ask",
+        ],
+      },
+      {
+        href: "/admin/tools/job-description",
+        label: "Job description writer",
+        keywords: [
           "write a job description",
+          "draft a posting",
+          "job ad",
+          "post a job",
+          "copy into bullhorn",
           "new role",
-          "close a role",
-          "what is open",
-          "job order",
         ],
       },
     ],

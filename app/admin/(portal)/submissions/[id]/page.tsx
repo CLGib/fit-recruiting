@@ -33,7 +33,7 @@ import {
   PREVIEW_ROLES,
   PREVIEW_ROWS,
 } from "@/lib/admin/preview";
-import { listOpenRoles } from "@/lib/admin/roles";
+import { listActiveJobs } from "@/lib/jobs/source";
 
 export const metadata: Metadata = {
   title: "Submission",
@@ -91,7 +91,9 @@ export default async function SubmissionPage({
         signedResumeUrl(submission.resume_path),
         getAnalysis(id),
         getRoleMatch(id),
-        listOpenRoles(),
+        // The job board's source. Never allowed to take this page down: if it
+        // fails, matching simply has no role names to show.
+        listActiveJobs().catch(() => []),
         getPresentation(id),
       ]);
 
